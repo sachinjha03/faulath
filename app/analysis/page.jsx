@@ -3,11 +3,16 @@ import React from 'react'
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import Link from 'next/link';
 
 export default function page() {
   return (
     <div className="analysis-landing-section">
+      <Link href={"/"} className="flex-btn back-btn">
+        <ArrowBackIosNewIcon className='back-icon'/>
+        <p>Back To Home</p>
+      </Link>
       <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
       <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
       <div className="analysis-landing-section-top">

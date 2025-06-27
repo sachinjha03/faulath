@@ -44,6 +44,8 @@
 import React, { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
 
 function CompanyContent() {
   const searchParams = useSearchParams();
@@ -51,6 +53,10 @@ function CompanyContent() {
 
   return (
     <div className="company-landing-section">
+      <Link href={"/analysis"} className="flex-btn back-btn">
+        <ArrowBackIosNewIcon/>
+        <p>Back To Analysis</p>
+      </Link>
       <img src="/Line.png" alt="" className='line-image' id='companyLine1' />
       <div className="company-landing-section-top">
         <h2>Selected : <span>{name}</span></h2>

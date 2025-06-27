@@ -33,6 +33,7 @@ a {
   border-radius: 50px;
   border: 1px solid white;
   text-align: center;
+  cursor: pointer;
 }
 
 .flex-btn {
@@ -40,6 +41,7 @@ a {
   gap: 0.6rem;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .flex-btn .flex-btn-icon {
@@ -82,6 +84,19 @@ a {
   background-color: white;
   color: black;
 }
+
+.back-btn{
+  position: absolute;
+  top: 3%;
+  left: 3%;
+  color: white;
+  z-index: 999;
+  font-size: 14px;
+}
+.back-btn .back-icon{
+  font-size: 15px;
+}
+
 
 h1 {
   font-size: 4.8rem;
@@ -825,6 +840,15 @@ option {
   }
   #companyLine1{
     width: 300px;
+  }
+  .company-landing-section{
+    padding-top: 5rem;
+  }
+  .back-btn p{
+    font-size: 10px;
+  }
+  .back-btn .back-icon{
+    font-size: 10px;
   }
 }
 
