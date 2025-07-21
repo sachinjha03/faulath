@@ -1,13 +1,17 @@
 import React from 'react';
-import Head from 'next/head';
+import Link from 'next/link';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 
 export default function GetHelp() {
   return (
     <>
-      <Head>
-        <title>Get Help | Support</title>
-      </Head>
+    <Link href={"/"} className="flex-btn back-btn">
+        <ArrowBackIosNewIcon className='back-icon'/>
+        <p>Back To Home</p>
+      </Link>
+      <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
+      <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
       <div className="help-page-container">
         <h1>Need Help? We've Got You Covered</h1>
 
