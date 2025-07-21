@@ -13,7 +13,7 @@ import { MyContext } from '../context/ContextApi';
 function CompanyContent() {
 
   let modules = {
-    "Bahrin Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
+    "Bahrain Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
     "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production", "Production Planning", "Quality Assurance", "Quality Control", "Safety & Environment", "Sales & Marketing"],
     "Sulb Saudi": ["Electrical Maintenance", "HR and Administration", "Logistics", "Mechanical Maintenance", "Production Planning & Control", "Quality", "Rolling Mill & Roll Shop", "Safety", "Sales & Marketing"],
     "Foulath": ["Facility Management", "Finance", "HR", "Internal Audit", "Digital Transformation", "IS", "SAP", "Legal", "PR Government Relations", "Capex & Opex", "Consumables", "LLIC"]
@@ -108,7 +108,7 @@ function CompanyContent() {
         <p>Choose the company you are performing the analysis for.</p>
       </div>
       <div className="company-landing-section-middle">
-        {['Bahrin Steel', 'Sulb', 'Sulb Saudi', 'Foulath'].map((company, index) => (
+        {['Bahrain Steel', 'Sulb', 'Sulb Saudi', 'Foulath'].map((company, index) => (
           <div key={index} className="company-card" id={`companyCard${index + 1}`}>
             <h3>{company}</h3>
             <p>Identify and evaluate the potential effects of a business disruption.</p>

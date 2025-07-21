@@ -10,7 +10,7 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 
 const moduleOptions = {
-  "Bahrin Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
+  "Bahrain Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
   "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production", "Production Planning", "Quality Assurance", "Quality Control", "Safety & Environment", "Sales & Marketing"],
   "Sulb Saudi": ["Electrical Maintenance", "HR and Administration", "Logistics", "Mechanical Maintenance", "Production Planning & Control", "Quality", "Rolling Mill & Roll Shop", "Safety", "Sales & Marketing"],
   "Foulath": ["Facility Management", "Finance", "HR", "Internal Audit", "Digital Transformation", "IS", "SAP", "Legal", "PR Government Relations", "Capex & Opex", "Consumables", "LLIC"]
@@ -110,7 +110,7 @@ export default function Page() {
       </Link>
       <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
       <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
-      <form onSubmit={handleSubmit} className={styles.signupForm}>
+      <form onSubmit={handleSubmit} className={styles.signupForm} style={{zIndex:10}}>
         <h3>Create Your Account</h3>
 
         <div className={styles.formRow}>
@@ -193,7 +193,7 @@ export default function Page() {
           <select name="company" id="company" className="input-field" value={formData.company} onChange={handleChange} required>
             <option value="">-- Select --</option>
             <option value="Foulath">Foulath</option>
-            <option value="Bahrin Steel">Bahrin Steel</option>
+            <option value="Bahrain Steel">Bahrain Steel</option>
             <option value="Sulb">SULB</option>
             <option value="Sulb Saudi">SULB Saudi</option>
           </select>

@@ -10,8 +10,8 @@ export default function GetHelp() {
         <ArrowBackIosNewIcon className='back-icon'/>
         <p>Back To Home</p>
       </Link>
-      <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
       <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
+      <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
       <div className="help-page-container">
         <h1>Need Help? We've Got You Covered</h1>
 
