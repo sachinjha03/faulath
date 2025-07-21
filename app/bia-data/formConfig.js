@@ -605,7 +605,7 @@ const formStructure = {
       { name: 'Additional Information', label: 'Additional Information', type: 'text' }
     ]
   },
-    'bahrin steel': {
+    'bahrain steel': {
     'OA File': [
       { name: 'Key Function / Service', label: 'Key Function / Service', type: 'text' },
       { name: 'Key Function / Service Owner(s)', label: 'Key Function / Service Owner(s)', type: 'text' },
