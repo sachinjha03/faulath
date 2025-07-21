@@ -4,6 +4,10 @@ import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircle';
 import { MyContext } from '../context/ContextApi';
+import Link from 'next/link';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
+
 
 const moduleOptions = {
   "Bahrin Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
@@ -100,6 +104,12 @@ export default function Page() {
 
   return (
     <div className={styles.signupPage}>
+      <Link href={"/"} className="flex-btn back-btn">
+        <ArrowBackIosNewIcon className='back-icon'/>
+        <p>Back To Home</p>
+      </Link>
+      <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
+      <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
       <form onSubmit={handleSubmit} className={styles.signupForm}>
         <h3>Create Your Account</h3>
 
