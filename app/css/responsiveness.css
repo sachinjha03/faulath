@@ -1,0 +1,303 @@
+/* RESPONSIVENESS */
+
+@media screen and (max-width:1000px) {
+  .company-landing-section-middle {
+    grid-template-columns: repeat(2, 1fr);
+    width: 670px;
+  }
+
+  #companyCard1 {
+    grid-column-end: 2;
+  }
+
+  #companyCard2 {
+    grid-row: span 1;
+  }
+}
+
+@media screen and (max-width:900px) {
+  h1 {
+    font-size: 4rem;
+  }
+
+  .primary-analysis-card {
+    width: 300px;
+    font-size: 14px;
+  }
+
+  .disabled-analysis-card {
+    width: 630px;
+  }
+
+  #companyLine1 {
+    width: 500px;
+  }
+}
+
+@media screen and (max-width:700px) {
+  h1 {
+    font-size: 3rem;
+  }
+
+  h2 {
+    font-size: 2.5rem;
+  }
+
+  .line-image {
+    width: 500px;
+  }
+
+  .navbar-right {
+    gap: 1rem;
+  }
+
+  .navbar-right .btn-a {
+    font-size: 12px;
+    min-width: 50px;
+    width: 140px !important;
+  }
+
+  .flex-btn .flex-btn-icon {
+    font-size: 14px;
+  }
+
+  .landing-section>.btn-a {
+    font-size: 14px;
+  }
+
+  .company-landing-section-middle {
+    width: 550px;
+  }
+
+  .login-form {
+    width: 450px;
+  }
+
+  .small-circle {
+    width: 300px;
+    height: 300px;
+  }
+
+  .medium-circle {
+    width: 500px;
+    height: 500px;
+  }
+
+  .large-circle {
+    width: 800px;
+    height: 800px;
+  }
+
+  .primary-analysis-card {
+    width: 250px;
+    min-height: 270px;
+  }
+
+  .primary-analysis-card h3 {
+    font-size: 1.3rem;
+  }
+
+  .analysis-card-circle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .primary-analysis-card .analysis-circle-icon {
+    font-size: 20px;
+  }
+
+  .disabled-analysis-card {
+    width: 530px;
+  }
+
+  .disabled-analysis-card-circle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .disabled-analysis-card-circle .big-icon {
+    font-size: 35px;
+  }
+
+  .disabled-analysis-card h3 {
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width:600px) {
+  .navbar-left {
+    gap: 1rem;
+    font-size: 14px;
+  }
+
+  .navbar-left .close-icon {
+    font-size: 16px;
+  }
+
+  .navbar-right .btn-a {
+    padding: 0.5rem 1.2rem;
+    width: 100px !important;
+  }
+
+  .navbar-right .flex-btn .flex-btn-icon {
+    display: none;
+  }
+
+  html {
+    font-size: 85%;
+  }
+
+  .landing-section>p {
+    font-size: 14px;
+  }
+
+  .primary-analysis-card {
+    width: 180px;
+    min-height: 220px;
+    font-size: 10px;
+  }
+
+  .primary-analysis-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .disabled-analysis-card {
+    width: 375px;
+    font-size: 12px;
+    min-height:200px;
+  }
+
+  .disabled-analysis-card-circle {
+    min-width: 60px;
+    min-height: 60px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .disabled-analysis-card-circle .big-icon {
+    font-size: 30px;
+  }
+
+  .disabled-analysis-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .disabled-analysis-card-content {
+    max-width: 270px;
+  }
+
+  .analysis-landing-section-middle {
+    gap: 1rem;
+  }
+  .company-landing-section-middle{
+    max-width: 410px;
+    gap: 1rem;
+  }
+  .company-card{
+    min-height: 100px;
+    height: 200px;
+  }
+  .company-card p{
+    font-size: 12px;
+  }
+  .company-card h3{
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width:450px) {
+  .navbar-right .btn-a {
+    font-size: 10px;
+    width: 80px !important;
+  }
+  .login-form{
+    width: 350px;
+  }
+   .company-landing-section-middle{
+    max-width: 350px;
+    gap: 1rem;
+  }
+  .company-card{
+    min-height: 100px;
+    height: 170px;
+  }
+  .company-card p{
+    font-size: 10px;
+  }
+  .company-card h3{
+    font-size: 1.2rem;
+  }
+  .company-card .btn-a{
+    font-size: 12px;
+    min-width: 100px;
+  }
+  .line-image{
+    width: 300px;
+  }
+  #companyLine1{
+    width: 300px;
+  }
+  .company-landing-section{
+    padding-top: 5rem;
+  }
+  .back-btn p{
+    font-size: 10px;
+  }
+  .back-btn .back-icon{
+    font-size: 10px;
+  }
+}
+
+@media screen and (max-width:390px) {
+  h2{
+    font-size: 2rem;
+  }
+   .primary-analysis-card {
+    width: 150px;
+    min-height: 220px;
+    font-size: 9px;
+    min-height: 100px;
+    height: 200px;
+  }
+
+  .primary-analysis-card h3 {
+    font-size: 0.9rem;
+  }
+  .primary-analysis-card .btn-a{
+    min-width: 50px;
+  }
+  .disabled-analysis-card{
+    width: 315px;
+  }
+  .disabled-analysis-card-circle {
+    min-width: 50px;
+    min-height: 50px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .disabled-analysis-card-circle .big-icon {
+    font-size: 25px;
+  }
+
+  .disabled-analysis-card h3 {
+    font-size: 1rem;
+  }
+
+  .disabled-analysis-card-content {
+    max-width: 240px;
+  }
+  h1{
+    font-size: 2.5rem;
+  }
+  .navbar-right .outline-btn{
+    display: none;
+  }
+}
+
+@media screen and (max-width:350px) {
+  .company-landing-section-middle{
+    grid-template-columns: repeat(1,1fr);
+    width: 300px;
+  }
+}

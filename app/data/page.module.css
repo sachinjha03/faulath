@@ -1,0 +1,228 @@
+.dataPage{
+    width: 100%;
+    min-height: 100vh;
+    padding: 3rem 2rem;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.dataPageTop{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+.dataPageTopRight{
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+.dataPageTopRight button{
+    background-color: orangered;
+    color: white;
+}
+
+.dataPageBottom{
+    border: 1px solid gray;
+    padding: 2rem 2rem;
+    overflow-x: auto;
+    position: relative;
+}
+.featureRow{
+    /* padding: 2rem 0rem; */
+    /* border: 1px solid black; */
+    padding-bottom: 1rem;
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+}
+.searchField{
+    border: 1px solid gray ;
+    border-radius: 4px;
+}
+.filter{
+    position: relative;
+    z-index: 999;
+}
+.filterBtn{
+    border-radius: 4px;
+    padding: 0.5rem 0.5rem;
+    background-color: #85c9ee;
+    color: white;
+}
+.filterMenu{
+    /* width: 150px; */
+    background-color: white;
+    box-shadow: rgba(100, 100, 111, 0.4) 0px 7px 29px 0px;
+    border-radius: 6px;
+    padding: 1rem 1rem;
+    /* margin-top: 0.5rem; */
+    position: absolute;
+    display: none;
+}
+.filter:hover .filterMenu{
+    display: block;
+}
+.filterMenu ul{
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 0.6rem;
+}
+.filterMenu ul li{
+    padding: 0.5rem 0.5rem;
+    list-style: none;
+    font-size: 12px;
+    cursor: pointer;
+    min-width: 150px;
+    z-index: 999;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+.filterMenu ul li:hover{
+    color: white;
+    background-color: #85c9ee;
+}
+.dataPageBottom table th{
+    background-color: rgb(240, 240, 240);
+    padding: 0.6rem 2rem;
+    min-width: 50px;
+    max-width: 250px;
+    font-size: 14px;
+}
+.dataPageBottom table {
+    border: 1px solid rgb(240, 240, 240);
+}
+.dataPageBottom td {
+  border-bottom: 1px solid rgb(240, 240, 240);
+  padding: 8px;
+  /* width: 200px; */
+}
+.dataPageBottom table tr td{
+    text-align: center;
+    padding: 1rem 1rem;
+}
+.dataPageBottom table td input[type="text"]{
+    width: 180px;
+    border: 1px solid rgb(175, 175, 175) ;
+}
+.dataPageBottom table td input[type="number"]{
+    width: 50px;
+    border: 1px solid rgb(175, 175, 175) ;
+}
+.dataPageBottom table td select{
+    width: auto;
+    border: 1px solid rgb(175, 175, 175) ;
+}
+.currentStatusTD {
+    font-size: 12px;
+}
+.basicFlex{
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+.outlinedBtn{
+    background-color: transparent;
+    border: 1px solid black;
+    transition: 0.5s;
+}
+.outlinedBtn:hover{
+    background-color: black;
+    color: white;
+}
+.filledBtn{
+    background-color: var(--black);
+    border: 1px solid black;
+    color: white;
+    transition: 0.5s;
+}
+.filledBtn:hover{
+    background-color: transparent;
+    color: black;
+}
+.deleteIcon{
+    color: orangered;
+    cursor: pointer;
+}
+.successIcon{
+    color: rgb(6, 161, 6);
+}
+
+.successBtn{
+    background-color: rgb(6, 161, 6) !important;
+    color: white;
+    transition: 0.5s;
+    font-size: 12px;
+    width: 160px;
+}
+.successBtn:hover{
+    background-color: rgb(2, 104, 2);
+}
+.failBtn{
+    background-color: orangered;
+    border: none;
+    transition: 0.5s;
+    color: white;
+    font-size: 12px;
+    width: 160px;
+}
+.failBtn:hover{
+    background-color: rgb(180, 50, 2);
+}
+.editBtn{
+    background-color: rgb(22, 149, 240);
+    width: 160px;
+    color: white;
+    border: none;
+}
+.editBtn:hover{
+    background-color: rgb(9, 121, 212);
+}
+.disabledBtn {
+  background-color: rgb(82, 82, 82);
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.7;
+  width: 160px;
+  border: none;
+}
+.rowDraft {
+  background-color: #ffffff;
+}
+
+.rowPending {
+  background-color: #e0f4ff; /* light sky blue */
+}
+
+.rowApprovedOwner {
+  background-color: #d1ffd1; /* light green */
+}
+
+.rowFinalApproved {
+  background-color: #93db9d; /* deeper green */
+}
+
+.rowRejectedOwner {
+  background-color: #fccece; /* light red/pink */
+}
+.rowRejectedAdmin {
+  background-color: #f59f9f; /* light red/pink */
+}
+
+.loadingScreen{
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.loadingScreen h3{
+    font-weight: 400;
+}

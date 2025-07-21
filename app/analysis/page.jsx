@@ -26,7 +26,7 @@ export default function page() {
           </div>
           <h3>Business Analysis Impact</h3>
           <p>Identify and evaluate the potential effects of a business disruption.</p>
-          <Link href={{ pathname: "/company", query: { name: "Business Analysis Impact" } }} className="btn-a filled-btn">Select</Link>
+          <Link href={{ pathname: "/company", query: { name: "BIA" } }} className="btn-a filled-btn">Select</Link>
         </div>
         <div className="primary-analysis-card">
           <div className="analysis-card-circle">
@@ -34,7 +34,7 @@ export default function page() {
           </div>
           <h3>Risk Assessment</h3>
           <p>Determine the likelihood and impact of potential threats and hazards.</p>
-          <Link href={{ pathname: "/company", query: { name: "Risk Assessment" } }} className="btn-a filled-btn">Select</Link>
+          <Link href={{ pathname: "/company", query: { name: "RA" } }} className="btn-a filled-btn">Select</Link>
         </div>
       </div>
       <div className="analysis-landing-section-bottom">
