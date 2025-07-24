@@ -1,0 +1,169 @@
+.landingSection {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--black);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.landingSection>p {
+  font-size: 22px;
+  z-index: 90;
+}
+
+.landingSection h1 {
+  z-index: 90;
+}
+
+.landingSection .btnA {
+  z-index: 90;
+}
+
+.landingSection>p span {
+  font-weight: 600;
+}
+
+.landingSection>.btnA {
+  font-size: 20px;
+  margin-top: 1rem;
+  width: 200px;
+}
+
+.circleParent {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100vh;
+}
+
+.smallCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  transform-style: preserve-3d;
+  z-index: 15;
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: smallCircleAnimation 20s linear infinite;
+}
+
+.smallCircle::before {
+  content: "";
+  position: absolute;
+  inset: 0px;
+  background: conic-gradient(from 90deg at 40% -25%,
+      #e0bbff, #c084fc, #a855f7, #9333ea, #7e22ce, #6b21a8, #581c87, #3b0764, #581c87, #6b21a8, #7e22ce, #9333ea, #a855f7, #c084fc, #e0bbff, #e0bbff, #e0bbff);
+  filter: blur(200px);
+  transform: translate3d(0px, -2px, -1px);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@keyframes smallCircleAnimation {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+
+.mediumCircle {
+  width: 1000px;
+  height: 1000px;
+  z-index: 13;
+  position: absolute;
+  animation: none;
+  background-color: var(--black);
+  transform: translate(-50%, -50%) scale(1.8);
+  animation: mediumCircleAnimation 30s linear infinite;
+  animation-delay: 0.5s;
+
+}
+
+.mediumCircle::before {
+  content: "";
+  position: absolute;
+  inset: 0px;
+  filter: blur(00px);
+  border-radius: inherit;
+  pointer-events: none;
+  transform: translate3d(0px, -1px, -1px);
+}
+
+@keyframes mediumCircleAnimation {
+  0% {
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+}
+
+.largeCircle {
+  width: 1400px;
+  height: 1400px;
+  z-index: 8;
+  background-color: var(--black);
+
+}
+
+.largeCircle::before {
+  content: "";
+  position: absolute;
+  inset: 0px;
+  filter: blur(00px);
+  border-radius: inherit;
+  pointer-events: none;
+  transform: translate3d(0px, -1px, -1px);
+}
+
+
+@media screen and (max-width:700px) {
+  .landingSection>.btnA {
+    font-size: 14px;
+  }
+
+  .smallCircle {
+    width: 300px;
+    height: 300px;
+  }
+
+  .mediumCircle {
+    width: 500px;
+    height: 500px;
+  }
+
+  .largeCircle {
+    width: 800px;
+    height: 800px;
+  }
+}
+
+@media screen and (max-width:600px) {
+  .landingSection>p {
+    font-size: 14px;
+  }
+}
+

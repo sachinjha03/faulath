@@ -1,0 +1,75 @@
+.navbar {
+  padding: 0rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  position: absolute;
+  top: 0%;
+  width: 100%;
+  z-index: 999;
+}
+
+.navbar a {
+  color: white;
+  transition: 0.4s;
+}
+
+.navbarLeft,
+.navbarRight {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  padding-top: 1.4rem;
+}
+
+.navbarLeft .closeIcon,
+.navbarLeft .menuIcon {
+  cursor: pointer;
+  transition: 0.6s;
+}
+
+
+@media screen and (max-width:700px) {
+  .navbarRight {
+    gap: 1rem;
+  }
+
+  .navbarRight .btnA {
+    font-size: 12px;
+    min-width: 50px;
+    width: 140px !important;
+  }
+}
+
+@media screen and (max-width:600px) {
+  .navbarLeft {
+    gap: 1rem;
+    font-size: 14px;
+  }
+
+  .navbarLeft .closeIcon {
+    font-size: 16px;
+  }
+
+  .navbarRight .btnA {
+    padding: 0.5rem 1.2rem;
+    width: 100px !important;
+  }
+
+  .navbarRight .flexBtnIcon {
+    display: none;
+  }
+}
+
+@media screen and (max-width:450px) {
+  .navbarRight .btnA {
+    font-size: 10px;
+    width: 80px !important;
+  }
+}
+
+@media screen and (max-width:390px) {
+  .outlineBtn{
+    display: none;
+  }
+}

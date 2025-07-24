@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 export default function NotFoundPage() {
   const router = useRouter();
   const takeMeHome = () => {
-    router.push('/'); // Redirect to homepage
+    router.push('/'); 
   };
 
   return (

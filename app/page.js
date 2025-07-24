@@ -1,21 +1,16 @@
 'use client';
-import MenuIcon from '@mui/icons-material/Menu';
-import Link from 'next/link';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import CloseIcon from '@mui/icons-material/Close';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
+import Navbar from "./components/Navbar.jsx"
+import styles from "./page.module.css"
+
 
 export default function Home() {
   const router = useRouter();
-  const [displayMenu, setDisplayMenu] = useState(true);
   const [decodedToken, setDecodedToken] = useState(null);
 
-  const hideMenu = () => setDisplayMenu(false);
-  const showMenu = () => setDisplayMenu(true);
-
-  // ✅ Check token on mount
   useEffect(() => {
     const token = localStorage.getItem("auth-token");
     if (token) {
@@ -29,10 +24,8 @@ export default function Home() {
     }
   }, []);
 
-  // ✅ Handle "Begin" click
   const handleAuthentication = () => {
     if (decodedToken) {
-      // Route based on module (e.g., "RA" or "BIA")
       if (decodedToken.department === "RA") {
         router.push("/data");
       } else if (decodedToken.department === "BIA") {
@@ -41,43 +34,21 @@ export default function Home() {
         alert("Invalid module in token.");
       }
     } else {
-      router.push("/analysis"); // Go to login if not authenticated
+      router.push("/analysis");
     }
   };
 
   return (
-    <div className="landing-section">
-      <div className="navbar">
-        <div className="navbar-left">
-          {displayMenu
-            ? <CloseIcon className='close-icon' onClick={hideMenu} />
-            : <MenuIcon className='menu-icon' onClick={showMenu} />}
-          {displayMenu && <a href="#">Home</a>}
-          {displayMenu && <a href="#">About</a>}
-        </div>
-        <div className="navbar-right">
-          <Link href="/signup" className="flex-btn btn-a filled-btn">
-            <p>Sign Up</p>
-            <ArrowForwardIcon className='flex-btn-icon' />
-          </Link>
-          <a href="/get-help" className="btn-a outline-btn">Get Help</a>
-        </div>
-      </div>
-
+    <div className={styles.landingSection}>
+      <Navbar/>
       <h1>Business Continuity Management</h1>
       <p>Resilience in <span>Action</span>, Continuity by <span>Design</span></p>
-
-      {/* ✅ Use button instead of Link for conditional navigation */}
-      <button className="btn-a filled-btn" onClick={handleAuthentication}>Begin</button>
-
-      <div className="circle-parent">
-        <div className="small-circle"></div>
-        <div className="small-circle medium-circle"></div>
-        <div className="small-circle large-circle"></div>
+      <button className={`btn-a filled-btn ${styles.btnA}`} onClick={handleAuthentication}>Begin</button>
+      <div className={styles.circleParent}>
+        <div className={styles.smallCircle}></div>
+        <div className={` ${styles.smallCircle} ${styles.mediumCircle}`}></div>
+        <div className={` ${styles.smallCircle} ${styles.largeCircle}`}></div>
       </div>
-      {/* <div className="background-animation-box">
-        <div className="animated-circle"></div>
-      </div> */}
     </div>
   );
 }

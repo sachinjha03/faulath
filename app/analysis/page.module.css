@@ -1,0 +1,257 @@
+.analysisLandingSection {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--black);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  padding: 4rem 2rem;
+  position: relative;
+}
+
+
+.analysisLandingSectionTop {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.analysisLandingSectionMiddle {
+  display: flex;
+  align-items: stretch;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.primaryAnalysisCard {
+  width: 350px;
+  min-height: 300px;
+  border: 1px solid var(--light_purple);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.primaryAnalysisCard::before {
+  content: "";
+  position: absolute;
+  bottom: -22%;
+  left: -22%;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  background-color: var(--light_purple);
+  transition: 0.7s;
+}
+
+.primaryAnalysisCard:hover::before {
+  width: 500px;
+  height: 500px;
+}
+
+.analysisCardCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #41267c;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.primaryAnalysisCard .btnA {
+  position: absolute;
+  bottom: 10%;
+}
+
+.primaryAnalysisCard h3,
+.primaryAnalysisCard p {
+  position: relative;
+}
+
+.disabledAnalysisCard {
+  border: 1px solid var(--light_purple);
+  border-radius: 8px;
+  width: 730px;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem 2rem;
+  justify-content: space-evenly;
+  cursor: not-allowed;
+}
+
+.disabledAnalysisCardCircle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #41267c;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.disabledAnalysisCardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: baseline;
+  max-width: 350px;
+  color: gray;
+}
+
+.disabledAnalysisCardContent .btnA {
+  margin-top: 1rem;
+}
+
+.disabledAnalysisCardCircle .bigIcon {
+  font-size: 55px;
+  color: gray;
+}
+
+.disabledAnalysisCard .btn-a {
+  background-color: gray;
+  border: 1px solid gray;
+  cursor: not-allowed;
+}
+
+.primaryAnalysisCard .analysisCircleIcon {
+  font-size: 35px;
+}
+
+
+@media screen and (max-width:900px) {
+  .primaryAnalysisCard {
+    width: 300px;
+    font-size: 14px;
+  }
+
+  .disabledAnalysisCard {
+    width: 630px;
+  }
+}
+
+@media screen and (max-width:700px) {
+  .primaryAnalysisCard {
+    width: 250px;
+    min-height: 270px;
+  }
+
+  .primaryAnalysisCard h3 {
+    font-size: 1.3rem;
+  }
+
+  .analysisCardCircle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .primaryAnalysisCard .analysisCircleIcon {
+    font-size: 20px;
+  }
+
+  .disabledAnalysisCard {
+    width: 530px;
+  }
+
+  .disabledAnalysisCardCircle {
+    width: 70px;
+    height: 70px;
+  }
+
+  .disabledAnalysisCardCircle .bigIcon {
+    font-size: 35px;
+  }
+
+  .disabledAnalysisCard h3 {
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width:600px) {
+  .primaryAnalysisCard {
+    width: 180px;
+    min-height: 220px;
+    font-size: 10px;
+  }
+
+  .primaryAnalysisCard h3 {
+    font-size: 1.1rem;
+  }
+
+  .disabledAnalysisCard {
+    width: 375px;
+    font-size: 12px;
+    min-height:200px;
+  }
+
+  .disabledAnalysisCardCircle {
+    min-width: 60px;
+    min-height: 60px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .disabledAnalysisCardCircle .bigIcon {
+    font-size: 30px;
+  }
+
+  .disabledAnalysisCard h3 {
+    font-size: 1.2rem;
+  }
+
+  .disabledAnalysisCardContent {
+    max-width: 270px;
+  }
+
+  .analysisLandingSectionMiddle {
+    gap: 1rem;
+  }
+}
+@media screen and (max-width:390px) {
+   .primaryAnalysisCard {
+    width: 150px;
+    min-height: 220px;
+    font-size: 9px;
+    min-height: 100px;
+    height: 200px;
+  }
+
+  .primaryAnalysisCard h3 {
+    font-size: 0.9rem;
+  }
+  .primaryAnalysisCard .btnA{
+    min-width: 50px;
+  }
+  .disabledAnalysisCard{
+    width: 315px;
+  }
+  .disabledAnalysisCardCircle {
+    min-width: 50px;
+    min-height: 50px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .disabledAnalysisCardCircle .bigIcon {
+    font-size: 25px;
+  }
+
+  .disabledAnalysisCard h3 {
+    font-size: 1rem;
+  }
+
+  .disabledAnalysisCardContent {
+    max-width: 240px;
+  }
+}

@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { RiskAssessmentContextProvider } from "./context/RiskAssessmentContextApi";
 import {MainContext} from "./context/ContextApi";
 
 const geistSans = Geist({

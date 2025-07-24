@@ -6,6 +6,8 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from 'next/navigation';
 import { MyContext } from '../context/ContextApi';
+import { jwtDecode } from 'jwt-decode';
+import styles from "./page.module.css"
 
 
 
@@ -27,6 +29,20 @@ function CompanyContent() {
   const [buttonText , setButtonText] = useState("Verify Identitiy")
   const [loading , setLoading] = useState(false)
   const MyContextApi = useContext(MyContext)
+
+
+  useEffect(() => {
+    const token = localStorage.getItem("auth-token");
+    if (token) {
+      const decoded_token = jwtDecode(token);
+      if (decoded_token.department == "RA") {
+          router.push("/data")
+      } else {
+        router.push("/bia-data")
+      }
+    }
+  }, []);
+
   
 
 
@@ -34,7 +50,7 @@ function CompanyContent() {
     if (selectedCompany && modules[selectedCompany]?.length > 0) {
       setData((prev) => ({
         ...prev,
-        module: modules[selectedCompany][0] // set first module as default
+        module: modules[selectedCompany][0]
       }));
     }
   }, [selectedCompany]);
@@ -57,14 +73,6 @@ function CompanyContent() {
   e.preventDefault();
   setButtonText("Verifying...");
   setLoading(true)
-  // const trimmedData = {
-  //   email: data.email.trim().toLowerCase(),
-  //   password: data.password.trim(),
-  //   role: data.role.trim(),
-  //   module: data.module.trim(),
-  //   company: selectedCompany?.trim() || '',
-  //   department: name?.trim() || '',
-  // };
 
   const response = await fetch(`${MyContextApi.backendURL}/api/login`, {
     method: 'POST',
@@ -75,10 +83,8 @@ function CompanyContent() {
       email: data.email.trim().toLowerCase(), password: data.password.trim(), module: name === "RA" ? "" : data.module, department: name, role: data.role, company: selectedCompany
     })
   });
-  // body: JSON.stringify(trimmedData)
 
   const json = await response.json();
-  console.log(json);
   
   if (json.success) {
     localStorage.setItem("auth-token", json.token);
@@ -97,22 +103,22 @@ function CompanyContent() {
 
 
   return (
-    <div className="company-landing-section">
+    <div className={styles.companyLandingSection}>
       <Link href={"/analysis"} className="flex-btn back-btn">
         <ArrowBackIosNewIcon />
         <p>Back To Analysis</p>
       </Link>
       <img src="/Line.png" alt="" className='line-image' id='companyLine1' />
-      <div className="company-landing-section-top">
+      <div className={styles.companyLandingSectionTop}>
         <h2>Selected : <span>{name}</span></h2>
         <p>Choose the company you are performing the analysis for.</p>
       </div>
-      <div className="company-landing-section-middle">
+      <div className={styles.companyLandingSectionMiddle}>
         {['Bahrain Steel', 'Sulb', 'Sulb Saudi', 'Foulath'].map((company, index) => (
-          <div key={index} className="company-card" id={`companyCard${index + 1}`}>
+          <div key={index} className={styles.companyCard} id={`companyCard${index + 1}`}>
             <h3>{company}</h3>
             <p>Identify and evaluate the potential effects of a business disruption.</p>
-            <button className="btn-a outline-btn" onClick={() => {
+            <button className={`btn-a outline-btn ${styles.btnA} `} onClick={() => {
               setSelectedCompany(company);
               displayLogin();
             }}>Select</button>
@@ -120,21 +126,21 @@ function CompanyContent() {
           </div>
         ))}
       </div>
-      {loginScreen && <div className="login-screen">
-        <form action="#" className="login-form" onSubmit={handleLogin}>
-          <CloseIcon className='close-icon' onClick={hideLogin} />
+      {loginScreen && <div className={styles.loginScreen}>
+        <form action="#" className={styles.loginForm} onSubmit={handleLogin}>
+          <CloseIcon className={styles.closeIcon} onClick={hideLogin} />
           <h3>Authenticate Your Identity</h3>
           <div className="input-box">
             <label htmlFor="email">Email</label>
-            <input type="email" name="email" id="email" className='input-field' value={data.email} onChange={handleChange} required />
+            <input type="email" name="email" id="email" className="input-field" value={data.email} onChange={handleChange} required />
           </div>
           <div className="input-box">
             <label htmlFor="password">Password</label>
-            <input type="password" name="password" id="password" className='input-field' value={data.password} onChange={handleChange} required />
+            <input type="password" name="password" id="password" className="input-field" value={data.password} onChange={handleChange} required />
           </div>
           <div className="input-box">
             <label htmlFor="role">Select Your Role</label>
-            <select name="role" id="role" className='input-field' value={data.role} onChange={handleChange} required>
+            <select name="role" id="role" className="input-field" value={data.role} onChange={handleChange} required>
               <option value="champion">Champion</option>
               <option value="owner">Owner</option>
               <option value="admin">Admin</option>
@@ -143,7 +149,7 @@ function CompanyContent() {
           {name == "BIA" && selectedCompany && (
             <div className="input-box">
               <label htmlFor="module">Select Your Module</label>
-              <select name="module" id="module" className='input-field' value={data.module} onChange={handleChange} required>
+              <select name="module" id="module" className="input-field" value={data.module} onChange={handleChange} required>
                 {modules[selectedCompany]?.map((module, index) => (
                   <option key={index} value={module}>{module}</option>
                 ))}
@@ -151,7 +157,7 @@ function CompanyContent() {
             </div>
           )}
           <a href="#">Forgot Password ?</a>
-          <button className='btn-a filled-btn' disabled={loading}>{buttonText}</button>
+          <button className={`btn-a filled-btn ${styles.filledBtn}`} disabled={loading}>{buttonText}</button>
         </form>
       </div>}
     </div>

@@ -24,7 +24,6 @@ export default function Page() {
   const [loading , setLoading] = useState(false)
   const MyContextApi = useContext(MyContext);
 
-  // Prevent numeric input in the name field
   const handleKeyDown = (e) => {
     if (e.target.name === 'name' && /\d/.test(e.key)) {
       e.preventDefault();
@@ -34,9 +33,7 @@ export default function Page() {
   // Handle input change and sanitize values
   const handleChange = (e) => {
     const { name, value } = e.target;
-    let sanitizedValue = value.trimStart(); // avoid leading spaces
-
-    // Convert email to lowercase
+    let sanitizedValue = value.trimStart();
     if (name === 'email') {
       sanitizedValue = sanitizedValue.toLowerCase();
     }
@@ -54,7 +51,7 @@ export default function Page() {
 
     const trimmedFormData = {};
     for (let key in formData) {
-      trimmedFormData[key] = formData[key].trim(); // final trim for all fields
+      trimmedFormData[key] = formData[key].trim();
     }
 
     const requiredFields = ['name', 'email', 'password', 'confirmPassword', 'role', 'department', 'company'];

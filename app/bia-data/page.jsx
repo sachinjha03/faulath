@@ -9,6 +9,7 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { useRouter } from 'next/navigation';
 import { MyContext } from '../context/ContextApi';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import SuccessScreen from '../components/SuccessScreen';
 
 
 
@@ -33,7 +34,7 @@ export default function Page() {
   const [editButton, setEditButton] = useState("Save Changes")
   const [displayLoadingScreen, setDisplayLoadingScreen] = useState(true)
   const [loading, setLoading] = useState(false)
-  const [logoutScreen , setLogoutScreen] = useState(false)
+  const [logoutScreen, setLogoutScreen] = useState(false)
 
   const MyContextApi = useContext(MyContext)
 
@@ -95,6 +96,7 @@ export default function Page() {
         }
       });
       const json = await response.json();
+
       if (!json.success) {
         console.error("Failed to fetch:", json.message);
         return;
@@ -109,6 +111,7 @@ export default function Page() {
           currentStatus: entry.currentStatus || "Draft",
           createdBy: entry.createdBy,
           userId: entry.userId,
+          lastEditedBy: entry.lastEditedBy || null
         };
         if (entry.formData && typeof entry.formData === 'object') {
           Object.entries(entry.formData).forEach(([key, value]) => {
@@ -191,7 +194,7 @@ export default function Page() {
       formData,
       createdBy: requiredData.email,
       userId: requiredData.userId,
-      lastEditedBy: requiredData.email
+      lastEditedBy: { email: requiredData.email }
     };
     try {
       setLoading(true)
@@ -206,7 +209,7 @@ export default function Page() {
           body: JSON.stringify({
             ...payload,
             currentStatus: "Pending for Owner Approval",
-            lastEditedBy: requiredData.email
+            lastEditedBy: { email: requiredData.email }
           })
         });
 
@@ -443,11 +446,6 @@ export default function Page() {
 
   return (
     <div className={styles.dataPage}>
-      <div className="under-construction">
-        <img src="/underConstruction.png" alt="" />
-        <p>CURRENTLY THIS WEBSITE CAN BE ONLY ACCESSED FROM LAPTOPS AND DESKTOPS. </p>
-        <h5>THANKS FOR VISITING US</h5>
-      </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
           <h3>{requiredData.company} : {requiredData.department} ({requiredData.module})</h3>
@@ -496,6 +494,7 @@ export default function Page() {
               {getFields().map(field => <th key={field.name}>{field.label}</th>)}
               <th>Actions</th>
               <th>Status</th>
+              <th>Last Edit</th>
             </tr>
           </thead>
           <tbody>
@@ -517,17 +516,6 @@ export default function Page() {
 
                 <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
                   <td>{index + 1}</td>
-                  {/* {getFields().map(field => (
-                    <td key={field.name}>
-                      <input
-                        type={field.type}
-                        value={row[field.name] || ''}
-                        onChange={(e) => handleChange(row.id, field.name, e.target.value)}
-                        disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
-                        className="input-field"
-                      />
-                    </td>
-                  ))} */}
                   {getFields().map(field => (
                     <td key={field.name}>
                       {(field.type != "text") ?
@@ -608,169 +596,46 @@ export default function Page() {
                         </>
                       )}
                   </td>
-                  <td style={{ fontSize: "12px" }}>{row.currentStatus}</td>
+                  {/* Current Status */}
+                  <td className={styles.currentStatusTD}>
+                    <div style={{ minWidth: '200px' }}>
+                      {row.currentStatus}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div className={styles.lastEditedByBox} style={{}}>
+                      {row.lastEditedBy &&
+                        row.lastEditedBy.email &&
+                        row.lastEditedBy.date &&
+                        row.lastEditedBy.time ? (
+                        <div>
+                          <p>Email: {row.lastEditedBy.email}</p>
+                          <p>Date: {row.lastEditedBy.date}</p>
+                          <p>Time: {row.lastEditedBy.time}</p>
+                        </div>
+                      ) : (
+                        <p>Not Edited Yet</p>
+                      )}
+                    </div>
+                  </td>
+
                 </tr>
               ))}
           </tbody>
         </table>
 
-        {successScreen && (
-          <div className="success-screen">
-            <div className="success-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To Delete This Data?</h3>
-              <p>This operation is irreversible. Deleting will remove the data permanently.</p>
-              <div className="success-box-button-row">
-                <button className="btn-a" onClick={deleteRow}>Yes, Delete It</button>
-                <button className="btn-a" onClick={hideSuccessScreen}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-        {approveScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <CheckCircleIcon className={styles.successIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To APPROVE This Data?</h3>
-              <p>This data will be sent to admin for final approval.</p>
-              <h5><span>NO EDIT</span> Can be performed once approved</h5>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.successBtn}`}
-                  onClick={() => {
-                    handleOwnerDecision(rowToApprove, 'approve');
-                    setApproveScreen(false);
-                    setRowToApprove(null);
-                  }}
-                >
-                  Yes, Approve
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setApproveScreen(false);
-                    setRowToApprove(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {rejectScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To REJECT This Data?</h3>
-              <p>This action is irreversible. No Further actions can be taken</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={() => {
-                    handleOwnerDecision(rowToReject, 'reject');
-                    setRejectScreen(false);
-                    setRowToReject(null);
-                  }}
-                >
-                  Yes, Reject
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setRejectScreen(false);
-                    setRowToReject(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {adminApproveScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <CheckCircleIcon className={styles.successIcon} style={{ fontSize: 50 }} />
-              <h3>Confirm Final Approval?</h3>
-              <p>This is the final approval. This step is irreversible.</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.successBtn}`}
-                  onClick={() => {
-                    handleAdminDecision(rowForAdminAction, 'approve');
-                    setAdminApproveScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Yes, Approve
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setAdminApproveScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {successScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Really Want To Delete This Data?"} headingColor={"orangered"} message={"This operation is irreversible. Deleting will remove the data permanently."} successButtonColor={"orangered"} successButtonText={"Yes, Delete It"} cancelText={"Cancel"} onConfirm={deleteRow} onCancel={hideSuccessScreen} />}
 
-        {adminRejectScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Are You Sure You Want To Reject?</h3>
-              <p>This is irreversible step. Please recheck before rejecting</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={() => {
-                    handleAdminDecision(rowForAdminAction, 'reject');
-                    setAdminRejectScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Yes, Reject
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setAdminRejectScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {logoutScreen && <div className="success-screen logout-screen">
-            <div className="success-box logout-box">
-              <ExitToAppIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Want To LOGOUT ?</h3>
-              <p>You can simply login again with your credentials</p>
-              <h5>Thank You</h5>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={handleLogout}
-                >
-                  Yes, Logout
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={hideLogoutScreen}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>}
+        {approveScreen && <SuccessScreen icon={<CheckCircleIcon style={{ fontSize: 50, color: "green" }} />} heading={"Do You Really Want To APPROVE This Data?"} headingColor={"green"} message={"This data will be sent to admin for final approval."} secondaryMessage={"NO EDIT can be perfored after approval"} successButtonColor={"green"} successButtonText={"Yes, Approve"} cancelText={"Cancel"} onConfirm={() => { handleOwnerDecision(rowToApprove, 'approve'); setApproveScreen(false); setRowToApprove(null); }} onCancel={() => { setApproveScreen(false); setRowToApprove(null); }} />}
+
+        {rejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Really Want To REJECT This Data?"} headingColor={"orangered"} message={"This action is irreversible. No Further actions can be taken"} successButtonColor={"orangered"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => { handleOwnerDecision(rowToReject, 'reject'); setRejectScreen(false); setRowToReject(null); }} onCancel={() => { setRejectScreen(false); setRowToReject(null); }} />}
+        
+        {adminApproveScreen && <SuccessScreen icon={<CheckCircleIcon style={{ fontSize: 50, color: "green" }} />} heading={"Confirm Final Approval"} headingColor={"green"} message={"This is the final approval. This step is irreversible."} successButtonColor={"green"} successButtonText={"Yes, Approve"} cancelText={"Cancel"} onConfirm={() => { handleAdminDecision(rowForAdminAction, 'approve'); setAdminApproveScreen(false); setRowForAdminAction(null); }} onCancel={() => { setAdminApproveScreen(false); setRowForAdminAction(null); }} />}
+
+        {adminRejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Are You Sure You Want To Reject?"} headingColor={"orangered"} message={"This is irreversible step. Please recheck before rejecting"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => {handleAdminDecision(rowForAdminAction, 'reject'); setAdminRejectScreen(false); setRowForAdminAction(null);}} onCancel={() => {setAdminRejectScreen(false);setRowForAdminAction(null);}} />}
+
+        {logoutScreen && <SuccessScreen icon={<ExitToAppIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Want To LOGOUT ?"} headingColor={"orangered"} message={"You can simply login again with your credentials"} secondaryMessage={"Thank You"} successButtonText={"Yes, Logout"} cancelText={"Cancel"} onConfirm={handleLogout} onCancel={hideLogoutScreen} />}
       </div>
     </div>
   );

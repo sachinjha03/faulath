@@ -1,5 +1,5 @@
 'use client';
-import React, { useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import styles from "./page.module.css";
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -8,6 +8,7 @@ import { jwtDecode } from 'jwt-decode';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { MyContext } from '../context/ContextApi';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import SuccessScreen from '../components/SuccessScreen';
 
 
 
@@ -27,14 +28,14 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [baseRows, setBaseRows] = useState([]);
-  const [rows, setRows] = useState([{ id: Date.now(), risks: '', definition: '', category: 'operational', likelihood: '3', impact: '4', riskScore: 12, existingControl: '', control: 50, residualRisk: 5, mitigationPlan: '', riskOwner: '', currentStatus: "Draft", submitted: false, editable: true }]);
-  const [sendButton , setSendButton] = useState("Send To Owner")
-  const [editButton , setEditButton] = useState('Save Changes')
-  const [loading , setLoading] = useState(false)
-  const [displayLoadingScreen , setDisplayLoadingScreen] = useState(true)
-  const [logoutScreen , setLogoutScreen] = useState(false)
-  
-  
+  const [rows, setRows] = useState([{ id: Date.now(), risks: '', definition: '', category: 'operational', likelihood: '3', impact: '4', riskScore: 12, existingControl: '', control: 50, residualRisk: 5, mitigationPlan: '', riskOwner: '', currentStatus: "Draft", submitted: false, editable: true, lastEditedBy: 'Not Edited Yet' }]);
+  const [sendButton, setSendButton] = useState("Send To Owner")
+  const [editButton, setEditButton] = useState('Save Changes')
+  const [loading, setLoading] = useState(false)
+  const [displayLoadingScreen, setDisplayLoadingScreen] = useState(true)
+  const [logoutScreen, setLogoutScreen] = useState(false)
+
+
   const MyContextApi = useContext(MyContext)
 
 
@@ -47,12 +48,12 @@ export default function Page() {
     const token = localStorage.getItem("auth-token");
     if (token) {
       const decoded_token = jwtDecode(token);
-      if(decoded_token.department == "RA"){
+      if (decoded_token.department == "RA") {
         setRequiredData(decoded_token || {});
         if (decoded_token?.userId) {
           fetchRiskData(decoded_token.userId);
         }
-      }else{
+      } else {
         router.push("/bia-data")
       }
     }
@@ -71,6 +72,7 @@ export default function Page() {
         }
       });
       const json = await res.json();
+
       if (json.success && Array.isArray(json.data)) {
         const formattedData = json.data.map((item) => ({
           id: Date.now() + Math.random(),
@@ -89,7 +91,10 @@ export default function Page() {
           currentStatus: item.currentStatus,
           submitted: true,
           editable: false,
+          lastEditedBy: item.lastEditedBy || '',
         }));
+
+
 
         const newData = [...formattedData, {
           id: Date.now(),
@@ -106,11 +111,14 @@ export default function Page() {
           riskOwner: '',
           currentStatus: 'Draft',
           submitted: false,
-          editable: true
+          editable: true,
+          lastEditedBy: 'Not Edited Yet'
         }];
 
-        setBaseRows(newData); // set original untouched data
-        setRows(newData);     // also set visible rows
+
+
+        setBaseRows(newData); 
+        setRows(newData);    
       }
 
     } catch (err) {
@@ -118,6 +126,8 @@ export default function Page() {
     }
     setDisplayLoadingScreen(false)
   };
+
+
 
 
 
@@ -157,7 +167,8 @@ export default function Page() {
         riskOwner: '',
         currentStatus: 'Draft',
         submitted: false,
-        editable: true
+        editable: true,
+        lastEditedBy: 'Not Edited Yet'
       }
     ]);
   };
@@ -242,7 +253,7 @@ export default function Page() {
   // HANDLE DATA SUBMISSION AND DATA UPDATE TO ADD/UPDATE RISK ASSESSMENT DATA TO THE SERVER
   const handleSubmit = async (row) => {
     const hasEmptyField = Object.entries(row)
-      .filter(([key]) => !['id', 'submitted', 'editable', 'riskScore', 'dataId'].includes(key))
+      .filter(([key]) => !['id', 'submitted', 'editable', 'riskScore', 'dataId', 'lastEditedBy'].includes(key))
       .some(([_, val]) => {
         if (typeof val === 'string') return val.trim() === '';
         return val === null || val === undefined;
@@ -269,7 +280,7 @@ export default function Page() {
       company: requiredData.company,
       ...(row.dataId
         ? {
-          lastEditedBy: requiredData.email,
+          lastEditedBy: { email: requiredData.email },
           userId: row.userId,
           createdBy: row.createdBy
         }
@@ -279,6 +290,7 @@ export default function Page() {
           lastEditedBy: null
         })
     };
+
     setLoading(true)
     try {
       let response;
@@ -452,78 +464,78 @@ export default function Page() {
 
 
 
-//FUNTION TO SEARCH DATA BASED UPON ENTERED VALUE
-const handleSearch = (term) => {
-  setSearchTerm(term);
-  let filtered = [...baseRows];
+  //FUNTION TO SEARCH DATA BASED UPON ENTERED VALUE
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    let filtered = [...baseRows];
 
-  if (term.trim() !== "") {
-    filtered = filtered.filter(row =>
-      Object.values(row).some(value =>
-        typeof value === "string" && value.toLowerCase().includes(term.toLowerCase())
-      )
-    );
-  }
+    if (term.trim() !== "") {
+      filtered = filtered.filter(row =>
+        Object.values(row).some(value =>
+          typeof value === "string" && value.toLowerCase().includes(term.toLowerCase())
+        )
+      );
+    }
 
-  if (filterStatus && filterStatus !== "") {
-    filtered = applyFilterLogic(filtered, filterStatus);
-  }
+    if (filterStatus && filterStatus !== "") {
+      filtered = applyFilterLogic(filtered, filterStatus);
+    }
 
-  setRows(filtered);
-};
+    setRows(filtered);
+  };
 
 
 
 
   //FUNCTION TO FILTER THE DATA
-const handleFilter = (filter) => {
-  setFilterStatus(filter);
-  let filtered = [...baseRows];
+  const handleFilter = (filter) => {
+    setFilterStatus(filter);
+    let filtered = [...baseRows];
 
-  if (searchTerm.trim() !== "") {
-    filtered = filtered.filter(row =>
-      Object.values(row).some(value =>
-        typeof value === "string" && value.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }
+    if (searchTerm.trim() !== "") {
+      filtered = filtered.filter(row =>
+        Object.values(row).some(value =>
+          typeof value === "string" && value.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
 
-  if (filter && filter !== "") {
-    filtered = applyFilterLogic(filtered, filter);
-  }
+    if (filter && filter !== "") {
+      filtered = applyFilterLogic(filtered, filter);
+    }
 
-  setRows(filtered);
-};
+    setRows(filtered);
+  };
 
 
-const applyFilterLogic = (rows, filter) => {
-  if (!filter) return rows;
+  const applyFilterLogic = (rows, filter) => {
+    if (!filter) return rows;
 
-  const statusFilters = [
-    "Pending for Owner Approval",
-    "Approved By Owner",
-    "Rejected By Owner",
-    "Pending for Admin Approval",
-    "Approved By Admin",
-    "Rejected By Admin"
-  ];
+    const statusFilters = [
+      "Pending for Owner Approval",
+      "Approved By Owner",
+      "Rejected By Owner",
+      "Pending for Admin Approval",
+      "Approved By Admin",
+      "Rejected By Admin"
+    ];
 
-  if (statusFilters.includes(filter)) {
-    return rows.filter(row =>
-      row.currentStatus?.toLowerCase().includes(filter.toLowerCase())
-    );
-  }
+    if (statusFilters.includes(filter)) {
+      return rows.filter(row =>
+        row.currentStatus?.toLowerCase().includes(filter.toLowerCase())
+      );
+    }
 
-  if (filter === "Newest First") {
-    return rows.sort((a, b) => b.id - a.id);
-  }
+    if (filter === "Newest First") {
+      return rows.sort((a, b) => b.id - a.id);
+    }
 
-  if (filter === "Oldest First") {
-    return rows.sort((a, b) => a.id - b.id);
-  }
+    if (filter === "Oldest First") {
+      return rows.sort((a, b) => a.id - b.id);
+    }
 
-  return rows;
-};
+    return rows;
+  };
 
 
 
@@ -533,11 +545,6 @@ const applyFilterLogic = (rows, filter) => {
 
   return (
     <div className={styles.dataPage}>
-      <div className="under-construction">
-        <img src="/underConstruction.png" alt="" />
-        <p>CURRENTLY THIS WEBSITE CAN BE ONLY ACCESSED FROM LAPTOPS AND DESKTOPS. </p>
-        <h5>THANKS FOR VISITING US</h5>
-      </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
           <h3>{requiredData.company} : {requiredData.department}</h3>
@@ -597,6 +604,7 @@ const applyFilterLogic = (rows, filter) => {
               <th>Risk Owner</th>
               <th>Actions</th>
               <th>Status</th>
+              <th>Last Edit</th>
             </tr>
           </thead>
           <tbody>
@@ -606,13 +614,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Risks */}
                 <td>
-                  {/* <input
-                    type="text"
-                    className="input-field"
-                    value={row.risks}
-                    onChange={(e) => handleInputChange(row.id, "risks", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
                   <textarea name="risks" className="input-field"
                     value={row.risks}
                     onChange={(e) => handleInputChange(row.id, "risks", e.target.value)}
@@ -621,13 +622,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Definition */}
                 <td>
-                  {/* <input
-                    type="text"
-                    className="input-field"
-                    value={row.definition}
-                    onChange={(e) => handleInputChange(row.id, "definition", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
                   <textarea name="definition" className="input-field"
                     value={row.definition}
                     onChange={(e) => handleInputChange(row.id, "definition", e.target.value)}
@@ -685,13 +679,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Existing Control */}
                 <td>
-                  {/* <input
-                    type="text"
-                    className="input-field"
-                    value={row.existingControl}
-                    onChange={(e) => handleInputChange(row.id, "existingControl", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
                   <textarea name="existingControl" className="input-field"
                     value={row.existingControl}
                     onChange={(e) => handleInputChange(row.id, "existingControl", e.target.value)}
@@ -711,12 +698,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Residual Risk */}
                 <td>
-                  {/* <input
-                    type="number"
-                    className="input-field"
-                    value={row.residualRisk}
-                    disabled
-                  /> */}
                   <input
                     type="number"
                     className="input-field"
@@ -728,13 +709,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Mitigation Plan */}
                 <td>
-                  {/* <input
-                    type="text"
-                    className="input-field"
-                    value={row.mitigationPlan}
-                    onChange={(e) => handleInputChange(row.id, "mitigationPlan", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
                   <textarea name="mitigationPlan" className="input-field"
                     value={row.mitigationPlan}
                     onChange={(e) => handleInputChange(row.id, "mitigationPlan", e.target.value)}
@@ -743,13 +717,6 @@ const applyFilterLogic = (rows, filter) => {
 
                 {/* Risk Owner */}
                 <td>
-                  {/* <input
-                    type="text"
-                    className="input-field"
-                    value={row.riskOwner}
-                    onChange={(e) => handleInputChange(row.id, "riskOwner", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
                   <textarea name="riskOwner" className="input-field"
                     value={row.riskOwner}
                     onChange={(e) => handleInputChange(row.id, "riskOwner", e.target.value)}
@@ -823,175 +790,51 @@ const applyFilterLogic = (rows, filter) => {
                 {/* <button className={`btn-a ${styles.disabledBtn}`} disabled>Locked</button> */}
 
                 {/* Current Status */}
-                <td className={styles.currentStatusTD}>{row.currentStatus}</td>
+                <td className={styles.currentStatusTD}>
+                  <div style={{ minWidth: '200px' }}>
+                    {row.currentStatus}
+                  </div>
+                </td>
+
+                <td>
+                  <div className={styles.lastEditedByBox} style={{}}>
+                    {row.lastEditedBy &&
+                      row.lastEditedBy.email &&
+                      row.lastEditedBy.date &&
+                      row.lastEditedBy.time ? (
+                      <div>
+                        <p>Email: {row.lastEditedBy.email}</p>
+                        <p>Date: {row.lastEditedBy.date}</p>
+                        <p>Time: {row.lastEditedBy.time}</p>
+                      </div>
+                    ) : (
+                      <p>Not Edited Yet</p>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
 
         </table>
 
-        {successScreen && (
-          <div className="success-screen">
-            <div className="success-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To Delete This Data?</h3>
-              <p>This operation is irreversible. Deleting will remove the data permanently.</p>
-              <div className="success-box-button-row">
-                <button className="btn-a" onClick={deleteRow}>Yes, Delete It</button>
-                <button className="btn-a" onClick={hideSuccessScreen}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {approveScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <CheckCircleIcon className={styles.successIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To APPROVE This Data?</h3>
-              <p>This data will be sent to admin for final approval.</p>
-              <h5><span>NO EDIT</span> Can be performed once approved</h5>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.successBtn}`}
-                  onClick={() => {
-                    handleOwnerDecision(rowToApprove, 'approve');
-                    setApproveScreen(false);
-                    setRowToApprove(null);
-                  }}
-                >
-                  Yes, Approve
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setApproveScreen(false);
-                    setRowToApprove(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {rejectScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Really Want To REJECT This Data?</h3>
-              <p>This action is irreversible. No Further actions can be taken</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={() => {
-                    handleOwnerDecision(rowToReject, 'reject');
-                    setRejectScreen(false);
-                    setRowToReject(null);
-                  }}
-                >
-                  Yes, Reject
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setRejectScreen(false);
-                    setRowToReject(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {adminApproveScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <CheckCircleIcon className={styles.successIcon} style={{ fontSize: 50 }} />
-              <h3>Confirm Final Approval?</h3>
-              <p>This is the final approval. This step is irreversible.</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.successBtn}`}
-                  onClick={() => {
-                    handleAdminDecision(rowForAdminAction, 'approve');
-                    setAdminApproveScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Yes, Approve
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setAdminApproveScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {adminRejectScreen && (
-          <div className="success-screen approve-screen">
-            <div className="success-box approve-box">
-              <WarningIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Are You Sure You Want To Reject?</h3>
-              <p>This is irreversible step. Please recheck before rejecting</p>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={() => {
-                    handleAdminDecision(rowForAdminAction, 'reject');
-                    setAdminRejectScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Yes, Reject
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={() => {
-                    setAdminRejectScreen(false);
-                    setRowForAdminAction(null);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {successScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Really Want To Delete This Data?"} headingColor={"orangered"} message={"This operation is irreversible. Deleting will remove the data permanently."} successButtonColor={"orangered"} successButtonText={"Yes, Delete It"} cancelText={"Cancel"} onConfirm={deleteRow} onCancel={hideSuccessScreen} />}
 
 
+        {approveScreen && <SuccessScreen icon={<CheckCircleIcon style={{ fontSize: 50, color: "green" }} />} heading={"Do You Really Want To APPROVE This Data?"} headingColor={"green"} message={"This data will be sent to admin for final approval."} secondaryMessage={"NO EDIT can be perfored after approval"} successButtonColor={"green"} successButtonText={"Yes, Approve"} cancelText={"Cancel"} onConfirm={() => { handleOwnerDecision(rowToApprove, 'approve'); setApproveScreen(false); setRowToApprove(null); }} onCancel={() => { setApproveScreen(false); setRowToApprove(null); }} />}
 
 
-        {logoutScreen && <div className="success-screen logout-screen">
-            <div className="success-box logout-box">
-              <ExitToAppIcon className={styles.deleteIcon} style={{ fontSize: 50 }} />
-              <h3>Do You Want To LOGOUT ?</h3>
-              <p>You can simply login again with your credentials</p>
-              <h5>Thank You</h5>
-              <div className="success-box-button-row">
-                <button
-                  className={`btn-a ${styles.failBtn}`}
-                  onClick={handleLogout}
-                >
-                  Yes, Logout
-                </button>
-                <button
-                  className="btn-a"
-                  onClick={hideLogoutScreen}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>}
+        {rejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Really Want To REJECT This Data?"} headingColor={"orangered"} message={"This action is irreversible. No Further actions can be taken"} successButtonColor={"orangered"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => { handleOwnerDecision(rowToReject, 'reject'); setRejectScreen(false); setRowToReject(null); }} onCancel={() => { setRejectScreen(false); setRowToReject(null); }} />}
+
+
+        {adminApproveScreen && <SuccessScreen icon={<CheckCircleIcon style={{ fontSize: 50, color: "green" }} />} heading={"Confirm Final Approval"} headingColor={"green"} message={"This is the final approval. This step is irreversible."} successButtonColor={"green"} successButtonText={"Yes, Approve"} cancelText={"Cancel"} onConfirm={() => { handleAdminDecision(rowForAdminAction, 'approve'); setAdminApproveScreen(false); setRowForAdminAction(null); }} onCancel={() => { setAdminApproveScreen(false); setRowForAdminAction(null); }} />}
+
+
+        {adminRejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Are You Sure You Want To Reject?"} headingColor={"orangered"} message={"This is irreversible step. Please recheck before rejecting"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => {handleAdminDecision(rowForAdminAction, 'reject'); setAdminRejectScreen(false); setRowForAdminAction(null);}} onCancel={() => {setAdminRejectScreen(false);setRowForAdminAction(null);}} />}
+
+
+        {logoutScreen && <SuccessScreen icon={<ExitToAppIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Want To LOGOUT ?"} headingColor={"orangered"} message={"You can simply login again with your credentials"} secondaryMessage={"Thank You"} successButtonText={"Yes, Logout"} cancelText={"Cancel"} onConfirm={handleLogout} onCancel={hideLogoutScreen} />}
 
 
 
