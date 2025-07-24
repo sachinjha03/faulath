@@ -640,6 +640,12 @@ export default function Page() {
                     <option value="financial">Financial</option>
                     <option value="reputational">Reputational</option>
                     <option value="environmental">Environmental</option>
+                    <option value="business">Business</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="technological">Technological</option>
+                    <option value="hsse">HSSE</option>
+                    <option value="hse">HSE</option>
+                    <option value="other">Other</option>
                   </select>
                 </td>
 
