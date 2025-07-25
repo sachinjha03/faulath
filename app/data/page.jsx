@@ -35,6 +35,14 @@ export default function Page() {
   const [displayLoadingScreen, setDisplayLoadingScreen] = useState(true)
   const [logoutScreen, setLogoutScreen] = useState(false)
 
+  const colorMap = {
+    1: "#59cc59ff",
+    2: "#FFFF00",
+    3: "#ffae00ff",
+    4: "#990000",
+    5: "#FF0000"
+  };
+
 
   const MyContextApi = useContext(MyContext)
 
@@ -117,8 +125,8 @@ export default function Page() {
 
 
 
-        setBaseRows(newData); 
-        setRows(newData);    
+        setBaseRows(newData);
+        setRows(newData);
       }
 
     } catch (err) {
@@ -542,7 +550,6 @@ export default function Page() {
 
 
 
-
   return (
     <div className={styles.dataPage}>
       <div className={styles.dataPageTop}>
@@ -650,7 +657,7 @@ export default function Page() {
                 </td>
 
                 {/* Likelihood */}
-                <td>
+                <td style={{ backgroundColor: colorMap[row.likelihood] || "transparent" }}>
                   <select
                     className="input-field"
                     value={row.likelihood}
@@ -662,7 +669,7 @@ export default function Page() {
                 </td>
 
                 {/* Impact */}
-                <td>
+                <td style={{ backgroundColor: colorMap[row.impact] || "transparent" }}>
                   <select
                     className="input-field"
                     value={row.impact}
@@ -674,13 +681,11 @@ export default function Page() {
                 </td>
 
                 {/* Risk Score */}
-                <td>
+                <td style={{backgroundColor:row.riskScore >= 1 && row.riskScore <= 2? "#59bd59ff": row.riskScore >= 3 && row.riskScore <= 9? "#FFFF00": "#FF0000"}}>
                   <input
                     type="number"
                     className="input-field"
-                    value={row.riskScore}
-                    disabled
-                  />
+                    value={row.riskScore} disabled />
                 </td>
 
                 {/* Existing Control */}
@@ -691,8 +696,9 @@ export default function Page() {
                     disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
                 </td>
 
+
                 {/* Control */}
-                <td>
+                <td style={{backgroundColor:row.control >= 0 && row.control <= 24? "#FF0000": row.control >= 25 && row.control <= 49? "#ffae00ff": row.control >= 50 && row.control <= 74? "#FFFF00" :"#59bd59ff"}}>
                   <input
                     type="number"
                     className="input-field"
@@ -837,14 +843,14 @@ export default function Page() {
         {adminApproveScreen && <SuccessScreen icon={<CheckCircleIcon style={{ fontSize: 50, color: "green" }} />} heading={"Confirm Final Approval"} headingColor={"green"} message={"This is the final approval. This step is irreversible."} successButtonColor={"green"} successButtonText={"Yes, Approve"} cancelText={"Cancel"} onConfirm={() => { handleAdminDecision(rowForAdminAction, 'approve'); setAdminApproveScreen(false); setRowForAdminAction(null); }} onCancel={() => { setAdminApproveScreen(false); setRowForAdminAction(null); }} />}
 
 
-        {adminRejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Are You Sure You Want To Reject?"} headingColor={"orangered"} message={"This is irreversible step. Please recheck before rejecting"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => {handleAdminDecision(rowForAdminAction, 'reject'); setAdminRejectScreen(false); setRowForAdminAction(null);}} onCancel={() => {setAdminRejectScreen(false);setRowForAdminAction(null);}} />}
+        {adminRejectScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Are You Sure You Want To Reject?"} headingColor={"orangered"} message={"This is irreversible step. Please recheck before rejecting"} successButtonText={"Yes, Reject"} cancelText={"Cancel"} onConfirm={() => { handleAdminDecision(rowForAdminAction, 'reject'); setAdminRejectScreen(false); setRowForAdminAction(null); }} onCancel={() => { setAdminRejectScreen(false); setRowForAdminAction(null); }} />}
 
 
         {logoutScreen && <SuccessScreen icon={<ExitToAppIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Want To LOGOUT ?"} headingColor={"orangered"} message={"You can simply login again with your credentials"} secondaryMessage={"Thank You"} successButtonText={"Yes, Logout"} cancelText={"Cancel"} onConfirm={handleLogout} onCancel={hideLogoutScreen} />}
 
 
 
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

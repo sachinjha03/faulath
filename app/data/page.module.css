@@ -28,6 +28,7 @@
   border: 1px solid gray;
   padding: 2rem 2rem;
   overflow-x: auto;
+  height: 750px;
   position: relative;
 }
 .featureRow {
