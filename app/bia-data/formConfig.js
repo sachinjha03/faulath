@@ -676,7 +676,7 @@ const formStructure = {
       { name: 'Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)', label: 'Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)', type: 'text' },
       { name: 'Who is Impacted', label: 'Who is Impacted', type: 'text' },
       { name: 'Max. Tolerable Period of Disruption (MTPD)', label: 'Max. Tolerable Period of Disruption (MTPD)', type: 'text' },
-      { name: 'Recovery Priority', label: 'Recovery Priority', type: 'number' },
+      // { name: 'Recovery Priority', label: 'Recovery Priority', type: 'number' },
       { name: 'Recovery Time Objective (RTO)', label: 'Recovery Time Objective (RTO)', type: 'text' },
       { name: 'Staff Requirement', label: 'Staff Requirement', type: 'number' },
       { name: 'Facilities & Workspace Requirements', label: 'Facilities & Workspace Requirements', type: 'text' },
