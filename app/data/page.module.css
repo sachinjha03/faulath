@@ -36,10 +36,12 @@
   display: flex;
   align-items: stretch;
   gap: 1rem;
+  z-index: 15;
 }
 .searchField {
   border: 1px solid gray;
   border-radius: 4px;
+  z-index: 15;
 }
 .filter {
   position: relative;
@@ -81,16 +83,27 @@
   color: white;
   background-color: #85c9ee;
 }
+
+.dataPageBottom table thead{
+  position: sticky;
+  top: -5%;
+  background-color: white;
+  z-index: 999;
+}
 .dataPageBottom table th {
   background-color: rgb(240, 240, 240);
   padding: 0.6rem 2rem;
   min-width: 50px;
   max-width: 250px;
   font-size: 14px;
+  position: sticky;
+  top: 0;
 }
 .dataPageBottom table {
   border: 1px solid rgb(240, 240, 240);
+  position: relative;
 }
+
 .dataPageBottom td {
   border-bottom: 1px solid rgb(240, 240, 240);
   padding: 8px;
@@ -109,8 +122,10 @@
   border: 1px solid rgb(175, 175, 175);
 }
 .dataPageBottom table td select {
+  position: relative;
   width: auto;
   border: 1px solid rgb(175, 175, 175);
+  z-index: 0;
 }
 .currentStatusTD {
   font-size: 12px;
