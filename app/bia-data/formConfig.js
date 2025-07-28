@@ -51,7 +51,7 @@ const formStructure = {
       { name: 'Recovery Time Objective (RTO)', label: 'Recovery Time Objective (RTO)', type: 'text' },
       { name: 'Staff Requirement', label: 'Staff Requirement', type: 'number' },
       { name: 'Facilities & Workspace Requirements', label: 'Facilities & Workspace Requirements', type: 'text' },
-      { name: 'Critical Records', label: 'Critical Records', type: 'text' },
+      // { name: 'Critical Records', label: 'Critical Records', type: 'text' },
       { name: 'Applications& Technology', label: 'Applications& Technology', type: 'text' },
       { name: 'Suppliers / Partners', label: 'Suppliers / Partners', type: 'text' },
       { name: 'Short-Term Workarounds?', label: 'Short-Term Workarounds?', type: 'text' },
