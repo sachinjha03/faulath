@@ -200,7 +200,7 @@ const formStructure = {
       { name: 'RPO Recovery Point Objective', label: 'RPO Recovery Point Objective', type: 'text' },
       { name: 'Additional Information', label: 'Additional Information', type: 'text' }
     ],
-    'LLIC': [
+    'ILIC': [
       { name: 'Key Function / Service', label: 'Key Function / Service', type: 'text' },
       { name: 'Key Function / Service Owner(s)', label: 'Key Function / Service Owner(s)', type: 'text' },
       { name: 'Time From Start Of Incident', label: 'Time From Start Of Incident', type: 'text' },
