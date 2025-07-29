@@ -12,6 +12,7 @@ import styles from "./page.module.css"
 
 
 
+
 function CompanyContent() {
 
   let modules = {
@@ -29,6 +30,36 @@ function CompanyContent() {
   const [buttonText , setButtonText] = useState("Verify Identitiy")
   const [loading , setLoading] = useState(false)
   const MyContextApi = useContext(MyContext)
+
+    const [forgotScreen , setForgotScreen] = useState(false)
+    const [newData , setNewData] = useState({email:"" , password:""})
+    const handleForgotDataChange = (e) => {
+        setNewData({...newData , [e.target.name]:e.target.value})
+    }
+    const handleSubmit = async(e) => {
+        e.preventDefault();
+        const response = await fetch(`${MyContextApi.backendURL}/api/forgot-password` , {
+            method:'PUT',
+            headers:{
+                'content-type':'application/json'
+            },
+            body : JSON.stringify({email:newData.email , password:newData.password})
+        })
+        const json = await response.json()
+       if(json.success){
+        alert("SUCCESS!! Password Changes Successfully")
+        window.location.reload()
+       }else{
+        alert("User Doesn't Exist")
+       }
+        
+    }
+    const handleScreenOpen = () => {
+        setForgotScreen(true)
+    }
+    const handleScreenClose = () => {
+        setForgotScreen(false)
+    }
 
 
   useEffect(() => {
@@ -156,10 +187,25 @@ function CompanyContent() {
               </select>
             </div>
           )}
-          <a href="#">Forgot Password ?</a>
+          <a href="#" onClick={handleScreenOpen}>Forgot Password ?</a>
           <button className={`btn-a filled-btn ${styles.filledBtn}`} disabled={loading}>{buttonText}</button>
         </form>
       </div>}
+      {forgotScreen && <div className={styles.forgotPasswordScreen}>
+        <form action="#" className={styles.forgotPasswordForm} onSubmit={handleSubmit}>
+            <CloseIcon className={styles.closeIcon} onClick={handleScreenClose}/>
+            <h3>Forgot Your Password</h3>
+            <div className="input-box">
+                <label htmlFor="email">Your Registered Email</label>
+                <input type="email" name="email" id="email" className='input-field' value={newData.email} onChange={handleForgotDataChange} required/>
+            </div>
+            <div className="input-box">
+                <label htmlFor="password">New Password</label>
+                <input type="password" name="password" id="password" className='input-field' value={newData.password} onChange={handleForgotDataChange} required/>
+            </div>
+            <button className="btn-a purple-btn">Update Password</button>
+        </form>
+    </div>}
     </div>
   );
 }

@@ -4,8 +4,8 @@ import React, { createContext } from "react";
 export const MyContext = createContext();
 
 export const MainContext = ({children}) => {
-    const backendURL = "https://bcm-backend.onrender.com"
-    // const backendURL = "http://localhost:8000"
+    // const backendURL = "https://bcm-backend.onrender.com"
+    const backendURL = "http://localhost:8000"
     return (
         <MyContext.Provider value={{backendURL}}>
             {children}
