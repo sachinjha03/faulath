@@ -178,7 +178,6 @@ textarea::-webkit-scrollbar-thumb {
 
 
 
-
 /* ANALYSIS PAGE */
 .line-image {
   position: absolute;
@@ -289,6 +288,41 @@ textarea::-webkit-scrollbar-thumb {
   display: inline-block;
   margin-top: 1rem;
 }
+
+
+/* GET HELP PAGE */
+
+#lightBlueCircle{
+  background-color: #e0f4ff;
+}
+#lightRedCircle{
+  background-color: #fccece;
+}
+#darkRedCircle{
+  background-color: #e77979;
+}
+#lightGreenCircle{
+  background-color: #d1ffd1;
+}
+#darkGreenCircle{
+  background-color: #7bd787;
+}
+#lightBlueText{
+  color: #e0f4ff;
+}
+#lightRedText{
+  color: #fccece;
+}
+#darkRedText{
+  color: #e77979;
+}
+#lightGreenText{
+  color: #d1ffd1;
+}
+#darkGreenText{
+  color: #7bd787;
+}
+
 
 
 

@@ -47,6 +47,16 @@ export default function GetHelp() {
             <li><span className={styles.buttonHighlight}>Approve / Reject</span>: Available for Owners and Admins to review.</li>
           </ul>
         </section>
+        <section className={styles.helpSection}>
+          <h2>🎨 Color Guide</h2>
+          <ul className={styles.helpList}>
+            <li><span className={styles.colorCircle} id='lightBlueCircle'></span><span className={styles.boldText} id='lightBlueText'>Light Blue</span> color represents : Data is pending for Owner's approval</li>
+            <li><span className={styles.colorCircle} id='lightRedCircle'></span><span className={styles.boldText} id='lightRedText'>Light Red</span> color represents : Data is rejected by Owner</li>
+            <li><span className={styles.colorCircle} id="darkRedCircle"></span><span className={styles.boldText} id='darkRedText'>Dark Red</span> color represents : Data is created rejected by Admin</li>
+            <li><span className={styles.colorCircle} id="lightGreenCircle"></span><span className={styles.boldText} id='lightGreenText'>Light Green</span> color represents : Data is approved by Owner</li>
+            <li><span className={styles.colorCircle} id="darkGreenCircle"></span><span className={styles.boldText} id='darkGreenText'>Dark Green</span> color represents : Data is approved by Admin</li>
+          </ul>
+        </section>
 
             <section className={styles.helpSection}>
           <h2>🛡️ Role-based Functionalities</h2>
