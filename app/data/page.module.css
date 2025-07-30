@@ -32,11 +32,11 @@
   position: relative;
 }
 .featureRow {
-  padding-bottom: 1rem;
+  margin-top: 2rem;
   display: flex;
   align-items: stretch;
   gap: 1rem;
-  z-index: 15;
+  z-index: 999;
 }
 .searchField {
   border: 1px solid gray;
@@ -63,6 +63,7 @@
 }
 .filter:hover .filterMenu {
   display: block;
+  /* z-index: 100000; */
 }
 .filterMenu ul {
   display: grid;
@@ -88,7 +89,7 @@
   position: sticky;
   top: -5%;
   background-color: white;
-  z-index: 999;
+  z-index: 99;
 }
 .dataPageBottom table th {
   background-color: rgb(240, 240, 240);

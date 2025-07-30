@@ -563,7 +563,6 @@ export default function Page() {
         </div>
       </div>
 
-      <div className={styles.dataPageBottom}>
         <div className={styles.featureRow}>
           <input
             type="text"
@@ -591,6 +590,7 @@ export default function Page() {
             </div>
           </div>
         </div>
+      <div className={styles.dataPageBottom}>
         {displayLoadingScreen && <div className={styles.loadingScreen}>
           <h3>Loading Data...</h3>
         </div>}

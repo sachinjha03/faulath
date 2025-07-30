@@ -456,7 +456,6 @@ export default function Page() {
           <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
         </div>
       </div>
-      <div className={styles.dataPageBottom}>
         <div className={styles.featureRow}>
           <input
             type="text"
@@ -473,8 +472,8 @@ export default function Page() {
             <div className={styles.filterMenu}>
               <ul>
                 <li onClick={() => setFilterStatus('')}>Remove Filter</li>
-                <li onClick={() => setFilterStatus('Newest First')}>Newest First</li>
-                <li onClick={() => setFilterStatus('Oldest First')}>Oldest First</li>
+                {/* <li onClick={() => setFilterStatus('Newest First')}>Newest First</li>
+                <li onClick={() => setFilterStatus('Oldest First')}>Oldest First</li> */}
                 <li onClick={() => setFilterStatus('Pending for Owner Approval')}>Pending For Owner Approval</li>
                 <li onClick={() => setFilterStatus('Approved By Owner')}>Approved By Owner</li>
                 <li onClick={() => setFilterStatus('Rejected By Owner')}>Rejected By Owner</li>
@@ -484,6 +483,7 @@ export default function Page() {
             </div>
           </div>
         </div>
+      <div className={styles.dataPageBottom}>
         {displayLoadingScreen && <div className={styles.loadingScreen}>
           <h3>Loading Data...</h3>
         </div>}
