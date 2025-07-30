@@ -40,7 +40,6 @@ export default function GetHelp() {
         <section className={styles.helpSection}>
           <h2>🧭 Button Guide</h2>
           <ul className={styles.helpList}>
-            <li><span className={styles.buttonHighlight}>Add New</span>: Add a new risk or BIA record.</li>
             <li><span className={styles.buttonHighlight}>Edit</span>: Modify existing entries.</li>
             <li><span className={styles.buttonHighlight}>Delete</span>: Permanently remove a record.</li>
             <li><span className={styles.buttonHighlight}>Submit</span>: Send your data for approval.</li>
