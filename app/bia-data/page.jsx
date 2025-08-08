@@ -10,6 +10,10 @@ import { useRouter } from 'next/navigation';
 import { MyContext } from '../context/ContextApi';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SuccessScreen from '../components/SuccessScreen';
+import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+
 
 
 
@@ -35,6 +39,9 @@ export default function Page() {
   const [displayLoadingScreen, setDisplayLoadingScreen] = useState(true)
   const [loading, setLoading] = useState(false)
   const [logoutScreen, setLogoutScreen] = useState(false)
+    const [notificationScreen, setNotificationScreen] = useState(false)
+    const [notifications, setNotifications] = useState([]);
+    const [deletingId, setDeletingId] = useState(null);
 
   const MyContextApi = useContext(MyContext)
 
@@ -49,6 +56,8 @@ export default function Page() {
       const decoded_token = jwtDecode(token);
       if (decoded_token.department == "BIA") {
         setRequiredData(decoded_token || {});
+        fetchNotifications();
+
       } else {
         router.push("/data")
       }
@@ -66,6 +75,50 @@ export default function Page() {
       fetchData(requiredData);
     }
   }, [requiredData]);
+
+// FETCH NOTIFICATIONS
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem("auth-token");
+    if (!token) return;
+
+    try {
+      // const decoded = jwtDecode(token);
+      // const userRole = decoded?.role;
+
+      const res = await fetch(`${MyContextApi.backendURL}/api/read-all-notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const json = await res.json();
+      console.log(json);
+      
+      if (json.success && Array.isArray(json.data)) {
+        setNotifications(json.data);
+        // setUnreadCount(json.data.filter(n => !n.isRead).length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    } finally {
+      // setLoadingNotifications(false);
+    }
+  };
+
+    const deleteNotification = async (id) => {
+    const token = localStorage.getItem("auth-token");
+    try {
+      setDeletingId(id);
+      await fetch(`${MyContextApi.backendURL}/api/delete-notification/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (err) {
+      console.error("Error clearing notifications", err);
+    }
+  };
 
 
 
@@ -446,6 +499,42 @@ export default function Page() {
 
   return (
     <div className={styles.dataPage}>
+    {notificationScreen && <div className={styles.notificationScreen}>
+        <div className={styles.notificationBox}>
+          <CloseIcon className={styles.notificationScreenCloseIcon} onClick={() => { setNotificationScreen(false) }} />
+          {notifications.length != 0 ? (
+              notifications.map((elem) => (
+            <div
+              key={elem._id} className={`${styles.myNotification} ${deletingId === elem._id ? styles.fadeOutNotification : ''}`}
+              onAnimationEnd={() => {
+                if (deletingId === elem._id) {
+                  setNotifications(prev => prev.filter(n => n._id !== elem._id));
+                  setDeletingId(null);
+                }
+              }}
+            >
+              <div className={styles.myNotificationCircle}>
+                <NotificationImportantIcon className={styles.notificationIcon} />
+              </div>
+              <p className={styles.notificationMessage}>{elem.message}</p>
+              <DeleteIcon
+                className={styles.notificationCloseIcon}
+                onClick={() => deleteNotification(elem._id)}
+              />
+            </div>
+          ))
+          )  :  
+          <div className={styles.noNotificationBox}>
+            <h3>No New Notifications...</h3>
+          </div>
+          }
+          
+        </div>
+      </div>}
+      <div className={styles.notificationCircle} onClick={() => { setNotificationScreen(true) }}>
+        <NotificationImportantIcon className={styles.notificationIcon} />
+        {(notifications.length > 0) && <div className={styles.notificationAlert}></div>}
+      </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
           <h3>{requiredData.company} : {requiredData.department} ({requiredData.module})</h3>

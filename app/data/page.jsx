@@ -9,7 +9,9 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { MyContext } from '../context/ContextApi';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SuccessScreen from '../components/SuccessScreen';
-
+import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 
 
@@ -34,6 +36,12 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [displayLoadingScreen, setDisplayLoadingScreen] = useState(true)
   const [logoutScreen, setLogoutScreen] = useState(false)
+  const [notificationScreen, setNotificationScreen] = useState(false)
+  const [notifications, setNotifications] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
+
+
+
 
   const colorMap = {
     1: "#59cc59ff",
@@ -60,12 +68,77 @@ export default function Page() {
         setRequiredData(decoded_token || {});
         if (decoded_token?.userId) {
           fetchRiskData(decoded_token.userId);
+          fetchNotifications();
         }
       } else {
         router.push("/bia-data")
       }
     }
   }, []);
+
+
+  // FETCH NOTIFICATIONS
+  // const decoded = jwtDecode(token);
+  // const userRole = decoded?.role;
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem("auth-token");
+    
+    if (!token) return;
+
+    try {
+
+      const res = await fetch(`${MyContextApi.backendURL}/api/read-all-notifications/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const json = await res.json();
+      console.log(json);
+      
+      if (json.success && Array.isArray(json.data)) {
+        setNotifications(json.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    } finally {
+      // setLoadingNotifications(false);
+    }
+  };
+
+  // console.log(notifications)
+
+
+  // const markAsRead = async (id) => {
+  //   const token = localStorage.getItem("auth-token");
+  //   try {
+  //     await fetch(`${MyContextApi.backendURL}/api/notifications/${id}/read`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`
+  //       }
+  //     });
+  //     fetchNotifications(); 
+  //   } catch (err) {
+  //     console.error("Error marking as read", err);
+  //   }
+  // };
+
+  const deleteNotification = async (id) => {
+    const token = localStorage.getItem("auth-token");
+    try {
+      setDeletingId(id);
+      await fetch(`${MyContextApi.backendURL}/api/delete-notification/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    } catch (err) {
+      console.error("Error clearing notifications", err);
+    }
+  };
+
 
 
 
@@ -552,6 +625,42 @@ export default function Page() {
 
   return (
     <div className={styles.dataPage}>
+      {notificationScreen && <div className={styles.notificationScreen}>
+        <div className={styles.notificationBox}>
+          <CloseIcon className={styles.notificationScreenCloseIcon} onClick={() => { setNotificationScreen(false) }} />
+          {notifications.length != 0 ? (
+              notifications.map((elem) => (
+            <div
+              key={elem._id} className={`${styles.myNotification} ${deletingId === elem._id ? styles.fadeOutNotification : ''}`}
+              onAnimationEnd={() => {
+                if (deletingId === elem._id) {
+                  setNotifications(prev => prev.filter(n => n._id !== elem._id));
+                  setDeletingId(null);
+                }
+              }}
+            >
+              <div className={styles.myNotificationCircle}>
+                <NotificationImportantIcon className={styles.notificationIcon} />
+              </div>
+              <p className={styles.notificationMessage}>{elem.message}</p>
+              <DeleteIcon
+                className={styles.notificationCloseIcon}
+                onClick={() => deleteNotification(elem._id)}
+              />
+            </div>
+          ))
+          )  :  
+          <div className={styles.noNotificationBox}>
+            <h3>No New Notifications...</h3>
+          </div>
+          }
+          
+        </div>
+      </div>}
+      <div className={styles.notificationCircle} onClick={() => { setNotificationScreen(true) }}>
+        <NotificationImportantIcon className={styles.notificationIcon} />
+        {(notifications.length > 0) && <div className={styles.notificationAlert}></div>}
+      </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
           <h3>{requiredData.company} : {requiredData.department}</h3>
@@ -563,33 +672,33 @@ export default function Page() {
         </div>
       </div>
 
-        <div className={styles.featureRow}>
-          <input
-            type="text"
-            className={`input-field ${styles.searchField}`}
-            placeholder="Search Data"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
-          <div className={styles.filter}>
-            <button className={`btn-a flex-btn ${styles.filterBtn}`}>
-              <FilterAltIcon />
-              <p>Filter Data</p>
-            </button>
-            <div className={styles.filterMenu}>
-              <ul>
-                <li onClick={() => handleFilter("")}>Remove Filter</li>
-                {/* <li onClick={() => handleFilter("Newest First")}>Newest First</li>
+      <div className={styles.featureRow}>
+        <input
+          type="text"
+          className={`input-field ${styles.searchField}`}
+          placeholder="Search Data"
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <div className={styles.filter}>
+          <button className={`btn-a flex-btn ${styles.filterBtn}`}>
+            <FilterAltIcon />
+            <p>Filter Data</p>
+          </button>
+          <div className={styles.filterMenu}>
+            <ul>
+              <li onClick={() => handleFilter("")}>Remove Filter</li>
+              {/* <li onClick={() => handleFilter("Newest First")}>Newest First</li>
                 <li onClick={() => handleFilter("Oldest First")}>Oldest First</li> */}
-                <li onClick={() => handleFilter("Pending for Owner Approval")}>Pending For Owner Approval</li>
-                <li onClick={() => handleFilter("Approved By Owner")}>Approved By Owner</li>
-                <li onClick={() => handleFilter("Rejected By Owner")}>Rejected By Owner</li>
-                <li onClick={() => handleFilter("Approved By Admin")}>Approved By Admin</li>
-                <li onClick={() => handleFilter("Rejected By Admin")}>Rejected By Admin</li>
-              </ul>
-            </div>
+              <li onClick={() => handleFilter("Pending for Owner Approval")}>Pending For Owner Approval</li>
+              <li onClick={() => handleFilter("Approved By Owner")}>Approved By Owner</li>
+              <li onClick={() => handleFilter("Rejected By Owner")}>Rejected By Owner</li>
+              <li onClick={() => handleFilter("Approved By Admin")}>Approved By Admin</li>
+              <li onClick={() => handleFilter("Rejected By Admin")}>Rejected By Admin</li>
+            </ul>
           </div>
         </div>
+      </div>
       <div className={styles.dataPageBottom}>
         {displayLoadingScreen && <div className={styles.loadingScreen}>
           <h3>Loading Data...</h3>
@@ -681,7 +790,7 @@ export default function Page() {
                 </td>
 
                 {/* Risk Score */}
-                <td style={{backgroundColor:row.riskScore >= 1 && row.riskScore <= 2? "#59bd59ff": row.riskScore >= 3 && row.riskScore <= 9? "#FFFF00": "#FF0000"}}>
+                <td style={{ backgroundColor: row.riskScore >= 1 && row.riskScore <= 2 ? "#59bd59ff" : row.riskScore >= 3 && row.riskScore <= 9 ? "#FFFF00" : "#FF0000" }}>
                   <input
                     type="number"
                     className="input-field"
@@ -698,7 +807,7 @@ export default function Page() {
 
 
                 {/* Control */}
-                <td style={{backgroundColor:row.control >= 0 && row.control <= 24? "#FF0000": row.control >= 25 && row.control <= 49? "#ffae00ff": row.control >= 50 && row.control <= 74? "#FFFF00" :"#59bd59ff"}}>
+                <td style={{ backgroundColor: row.control >= 0 && row.control <= 24 ? "#FF0000" : row.control >= 25 && row.control <= 49 ? "#ffae00ff" : row.control >= 50 && row.control <= 74 ? "#FFFF00" : "#59bd59ff" }}>
                   <input
                     type="number"
                     className="input-field"
@@ -850,7 +959,7 @@ export default function Page() {
 
 
 
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }

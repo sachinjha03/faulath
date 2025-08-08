@@ -7,6 +7,130 @@
   flex-direction: column;
   gap: 2rem;
 }
+.notificationScreen{
+  position: fixed;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.notificationBox{
+  padding: 2rem 2rem;
+  width: 80%;
+  max-width: 800px;
+  background-color: white;
+  box-shadow: rgba(99, 99, 99, 0.5) 0px 2px 8px 0px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  height: 500px;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.notificationScreenCloseIcon{
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  cursor: pointer;
+  color: orangered;
+  font-size: 40px !important;
+  z-index: 10;
+}
+.noNotificationBox{
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.noNotificationBox h3{
+  font-weight: 400;
+}
+.myNotification{
+  padding: 1rem 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgb(188, 188, 188);
+  width: 100%;
+}
+
+.myNotificationCircle{
+  background-color: white;
+  min-width: 50px;
+  max-width: 50px;
+  min-height: 50px;
+  max-height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* border: 1px solid gray; */
+}
+.notificationMessage{
+  font-size: 14px;
+  width: 80%;
+}
+.notificationCloseIcon{
+  cursor: pointer;
+  color: orangered;
+}
+.fadeOutNotification {
+  animation: fadeOutSwipe 0.8s forwards;
+}
+
+@keyframes fadeOutSwipe {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+
+.notificationCircle{
+  position: fixed;
+  bottom: 3%;
+  right: 3%;
+  z-index: 1000;
+  background-color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: rgba(100, 100, 111, 0.6) 0px 7px 29px 0px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.notificationIcon{
+  color: orange;
+  font-size: 30px !important;
+}
+.notificationAlert{
+  position: absolute;
+  top: 3%;
+  right: 8%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: red;
+}
 .dataPageTop {
   width: 100%;
   display: flex;
@@ -36,7 +160,7 @@
   display: flex;
   align-items: stretch;
   gap: 1rem;
-  z-index: 999;
+  /* z-index: 999; */
 }
 .searchField {
   border: 1px solid gray;
@@ -45,7 +169,7 @@
 }
 .filter {
   position: relative;
-  z-index: 999;
+  z-index: 100;
 }
 .filterBtn {
   border-radius: 4px;
