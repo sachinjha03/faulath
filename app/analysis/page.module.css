@@ -10,6 +10,7 @@
   color: white;
   padding: 4rem 2rem;
   position: relative;
+  overflow-x: hidden;
 }
 
 
@@ -143,12 +144,15 @@
 
 @media screen and (max-width:700px) {
   .primaryAnalysisCard {
-    width: 250px;
-    min-height: 270px;
+    width: 100%;
+    min-height: 200px;
+  }
+  .analysisLandingSectionMiddle{
+    flex-direction: column;
   }
 
   .primaryAnalysisCard h3 {
-    font-size: 1.3rem;
+    font-size: 1.7rem;
   }
 
   .analysisCardCircle {
@@ -161,7 +165,8 @@
   }
 
   .disabledAnalysisCard {
-    width: 530px;
+    /* width: 530px; */
+    width: 100%;
   }
 
   .disabledAnalysisCardCircle {
@@ -179,18 +184,18 @@
 }
 
 @media screen and (max-width:600px) {
-  .primaryAnalysisCard {
+  /* .primaryAnalysisCard {
     width: 180px;
     min-height: 220px;
     font-size: 10px;
-  }
+  } */
 
   .primaryAnalysisCard h3 {
-    font-size: 1.1rem;
+    font-size: 1.7rem;
   }
 
   .disabledAnalysisCard {
-    width: 375px;
+    /* width: 375px; */
     font-size: 12px;
     min-height:200px;
   }
@@ -207,7 +212,7 @@
   }
 
   .disabledAnalysisCard h3 {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
   }
 
   .disabledAnalysisCardContent {
@@ -220,15 +225,15 @@
 }
 @media screen and (max-width:390px) {
    .primaryAnalysisCard {
-    width: 150px;
-    min-height: 220px;
+    width: 100%;
+    /* min-height: 220px; */
     font-size: 9px;
     min-height: 100px;
     height: 200px;
   }
 
   .primaryAnalysisCard h3 {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
   }
   .primaryAnalysisCard .btnA{
     min-width: 50px;

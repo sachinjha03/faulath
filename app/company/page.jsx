@@ -187,7 +187,7 @@ function CompanyContent() {
               </select>
             </div>
           )}
-          <a href="#" onClick={handleScreenOpen}>Forgot Password ?</a>
+          <a href="#" onClick={handleScreenOpen} style={{color:"white"}}>Forgot Password ?</a>
           <button className={`btn-a filled-btn ${styles.filledBtn}`} disabled={loading}>{buttonText}</button>
         </form>
       </div>}
