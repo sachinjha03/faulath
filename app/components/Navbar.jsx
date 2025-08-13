@@ -19,7 +19,7 @@ export default function Navbar() {
           <MenuIcon className={styles.menuIcon} onClick={showMenu} />
         )}
         {displayMenu && <a href="#">Home</a>}
-        {displayMenu && <a href="#">About</a>}
+        {/* {displayMenu && <a href="#">About</a>} */}
       </div>
       <div className={styles.navbarRight}>
         <Link href="/signup" className={`flex-btn btn-a filled-btn ${styles.flexBtn} ${styles.btnA} ${styles.filledBtn}`}>

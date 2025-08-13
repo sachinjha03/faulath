@@ -499,6 +499,8 @@ export default function Page() {
 
   return (
     <div className={styles.dataPage}>
+      <img src="Line.png" alt="" className={styles.topLine} />
+      <img src="Line.png" alt="" className={styles.bottomLine} />
     {notificationScreen && <div className={styles.notificationScreen}>
         <div className={styles.notificationBox}>
           <CloseIcon className={styles.notificationScreenCloseIcon} onClick={() => { setNotificationScreen(false) }} />

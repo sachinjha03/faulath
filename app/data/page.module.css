@@ -7,6 +7,20 @@
   flex-direction: column;
   gap: 2rem;
 }
+.topLine{
+  position: absolute;
+  top: -10%;
+  left: -5%;
+  width: 600px;
+  /* height: 400px; */
+}
+.bottomLine{
+  position: absolute;
+  top: -10%;
+  z-index: 1;
+  right: -5%;
+  width: 600px;
+}
 .notificationScreen{
   position: fixed;
   top: 0%;
@@ -137,6 +151,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  z-index: 10;
 }
 .dataPageTopRight {
   display: flex;
