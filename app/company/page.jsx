@@ -175,6 +175,7 @@ function CompanyContent() {
               <option value="champion">Champion</option>
               <option value="owner">Owner</option>
               <option value="admin">Admin</option>
+              <option value="super admin">Super Admin</option>
             </select>
           </div>
           {name == "BIA" && selectedCompany && (

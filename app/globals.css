@@ -387,6 +387,9 @@ textarea::-webkit-scrollbar-thumb {
   html{
     font-size: 70%;
   }
+  .success-box-button-row{
+    flex-direction: column;
+  }
 }
 
 @media screen and (max-width:390px) {

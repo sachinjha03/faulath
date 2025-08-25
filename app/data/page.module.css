@@ -134,7 +134,7 @@
 }
 .notificationIcon{
   color: orange;
-  font-size: 30px !important;
+  font-size: 25px !important;
 }
 .notificationAlert{
   position: absolute;
@@ -149,7 +149,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: 2rem;
   z-index: 10;
 }
@@ -173,9 +173,14 @@
 .featureRow {
   margin-top: 2rem;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   /* z-index: 999; */
+}
+.featureRowLeft{
+  display: flex;
+  gap: 1rem;
 }
 .searchField {
   border: 1px solid gray;
@@ -189,7 +194,7 @@
 .filterBtn {
   border-radius: 20px;
   padding: 0.5rem 0.5rem;
-  background-color: #85c9ee;
+  background-color: #85c9ee !important;
   color: white;
 }
 .filterMenu {
@@ -223,7 +228,40 @@
   color: white;
   background-color: #85c9ee;
 }
-
+.exportBtn{
+  z-index: 9;
+  position: relative;
+  cursor: pointer;
+}
+.myProfile{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+}
+.myProfile .profileIcon{
+  font-size: 45px;
+  cursor: pointer;
+  /* color: #85c9ee; */
+}
+.myProfileDetails{
+  position: absolute;
+  top: 40px;
+  right: 0px;
+  z-index: 101;
+  padding: 1rem 1rem;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  background-color: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  display: none;
+}
+.myProfile:hover > .myProfileDetails{
+  display: flex;
+}
 .dataPageBottom table thead{
   position: sticky;
   top: -5%;
@@ -319,6 +357,7 @@
   color: white;
   font-size: 12px;
   width: 160px;
+  margin: 0.15rem 0;
 }
 .failBtn:hover {
   background-color: rgb(180, 50, 2);
@@ -391,7 +430,43 @@
 
 
 @media screen and (max-width:600px) {
-  .dataPageTop{
+  /* .dataPageTop{
     flex-direction: column;
+  } */
+   .filterMenu{
+    left: -200px;
+   }
+   .topLine{
+    width: 450px;
+   }
+   .featureRow{
+    flex-direction: column-reverse;
+   }
+   .featureRowLeft{
+    justify-content: space-between;
+   }
+   .featureRowRight{
+    width: 100%;
+   }
+   .searchField{
+    /* width: 300px; */
+   }
+   .exportBtn{
+    /* display: block; */
+    width: 100%;
+   }
+}
+
+@media screen  and (max-width:450px){
+  .topLine{
+    width: 300px;
+  }
+  .notificationMessage{
+    font-size: 12px;
+  }
+}
+@media screen and (max-width:360px) {
+  .searchField{
+    width: 140px;
   }
 }

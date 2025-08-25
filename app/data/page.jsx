@@ -12,6 +12,10 @@ import SuccessScreen from '../components/SuccessScreen';
 import NotificationImportantIcon from '@mui/icons-material/NotificationImportant';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 
 
@@ -82,7 +86,7 @@ export default function Page() {
   // const userRole = decoded?.role;
   const fetchNotifications = async () => {
     const token = localStorage.getItem("auth-token");
-    
+
     if (!token) return;
 
     try {
@@ -95,7 +99,7 @@ export default function Page() {
 
       const json = await res.json();
       console.log(json);
-      
+
       if (json.success && Array.isArray(json.data)) {
         setNotifications(json.data);
       }
@@ -200,6 +204,8 @@ export default function Page() {
 
         setBaseRows(newData);
         setRows(newData);
+        console.log(newData);
+
       }
 
     } catch (err) {
@@ -208,6 +214,65 @@ export default function Page() {
     setDisplayLoadingScreen(false)
   };
 
+
+  const exportToExcel = () => {
+    if (!rows || rows.length === 0) return;
+
+    // Map rows to a format suitable for Excel
+    const exportData = rows
+      // remove rows where risks (or any key field) is empty
+      .filter(row => row.risks && row.risks.trim() !== "")
+      .map((row, index) => ({
+        "S.No": index + 1,
+        "Risks": row.risks,
+        "Definition/Potential Cause": row.definition,
+        "Category": row.category,
+        "Likelihood": row.likelihood,
+        "Impact": row.impact,
+        "Risk Score": row.riskScore,
+        "Existing Control": row.existingControl,
+        "Control %": row.control,
+        "Residual Risk": row.residualRisk,
+        "Mitigation Plan": row.mitigationPlan,
+        "Risk Owner": row.riskOwner,
+        "Actions": row.actions || "",
+        "Status": row.currentStatus,
+        "Last Edit": row.lastEditedBy
+          ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
+          : "Not Edited Yet"
+      }));
+
+
+    // Create a worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Risk Data");
+
+    // --- Column Widths ---
+    worksheet['!cols'] = [
+      { wch: 6 },   // S.No
+      { wch: 20 },  // Risks
+      { wch: 30 },  // Definition
+      { wch: 15 },  // Category
+      { wch: 12 },  // Likelihood
+      { wch: 12 },  // Impact
+      { wch: 12 },  // Risk Score
+      { wch: 25 },  // Existing Control
+      { wch: 12 },  // Control %
+      { wch: 15 },  // Residual Risk
+      { wch: 25 },  // Mitigation Plan
+      { wch: 20 },  // Risk Owner
+      { wch: 15 },  // Actions
+      { wch: 25 },  // Status
+      { wch: 40 }   // Last Edit
+    ];
+
+
+    // Write workbook and save
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "RiskData.xlsx");
+  };
 
 
 
@@ -626,37 +691,37 @@ export default function Page() {
   return (
     <div className={styles.dataPage}>
       <img src="Line.png" alt="" className={styles.topLine} />
-      <img src="Line.png" alt="" className={styles.bottomLine} />
+      {/* <img src="Line.png" alt="" className={styles.bottomLine} /> */}
       {notificationScreen && <div className={styles.notificationScreen}>
         <div className={styles.notificationBox}>
           <CloseIcon className={styles.notificationScreenCloseIcon} onClick={() => { setNotificationScreen(false) }} />
           {notifications.length != 0 ? (
-              notifications.map((elem) => (
-            <div
-              key={elem._id} className={`${styles.myNotification} ${deletingId === elem._id ? styles.fadeOutNotification : ''}`}
-              onAnimationEnd={() => {
-                if (deletingId === elem._id) {
-                  setNotifications(prev => prev.filter(n => n._id !== elem._id));
-                  setDeletingId(null);
-                }
-              }}
-            >
-              <div className={styles.myNotificationCircle}>
-                <NotificationImportantIcon className={styles.notificationIcon} />
+            notifications.map((elem) => (
+              <div
+                key={elem._id} className={`${styles.myNotification} ${deletingId === elem._id ? styles.fadeOutNotification : ''}`}
+                onAnimationEnd={() => {
+                  if (deletingId === elem._id) {
+                    setNotifications(prev => prev.filter(n => n._id !== elem._id));
+                    setDeletingId(null);
+                  }
+                }}
+              >
+                <div className={styles.myNotificationCircle}>
+                  <NotificationImportantIcon className={styles.notificationIcon} />
+                </div>
+                <p className={styles.notificationMessage}>{elem.message}</p>
+                <DeleteIcon
+                  className={styles.notificationCloseIcon}
+                  onClick={() => deleteNotification(elem._id)}
+                />
               </div>
-              <p className={styles.notificationMessage}>{elem.message}</p>
-              <DeleteIcon
-                className={styles.notificationCloseIcon}
-                onClick={() => deleteNotification(elem._id)}
-              />
+            ))
+          ) :
+            <div className={styles.noNotificationBox}>
+              <h3>No New Notifications...</h3>
             </div>
-          ))
-          )  :  
-          <div className={styles.noNotificationBox}>
-            <h3>No New Notifications...</h3>
-          </div>
           }
-          
+
         </div>
       </div>}
       <div className={styles.notificationCircle} onClick={() => { setNotificationScreen(true) }}>
@@ -665,40 +730,52 @@ export default function Page() {
       </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
-          <h3>{requiredData.company} : {requiredData.department}</h3>
+          <h3>{requiredData.company} : {requiredData.department} {requiredData.department == "RA" ? "(Risk Assessment)" : "(Business Impact Analysis)"}</h3>
           <h4>Logged In As : {requiredData.role}</h4>
         </div>
         <div className={styles.dataPageTopRight}>
-          <h4>{requiredData.email}</h4>
-          <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
+          <div className={styles.myProfile}>
+            <AccountCircleIcon className={styles.profileIcon} />
+            <div className={styles.myProfileDetails}>
+              <h4>{requiredData.email}</h4>
+              <button className={`btn-a ${styles.filterBtn}`}>Ledger</button>
+              <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className={styles.featureRow}>
-        <input
-          type="text"
-          className={`input-field ${styles.searchField}`}
-          placeholder="Search Data"
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        <div className={styles.filter}>
-          <button className={`btn-a flex-btn ${styles.filterBtn}`}>
-            <FilterAltIcon />
-            <p>Filter Data</p>
-          </button>
-          <div className={styles.filterMenu}>
-            <ul>
-              <li onClick={() => handleFilter("")}>Remove Filter</li>
-              {/* <li onClick={() => handleFilter("Newest First")}>Newest First</li>
-                <li onClick={() => handleFilter("Oldest First")}>Oldest First</li> */}
-              <li onClick={() => handleFilter("Pending for Owner Approval")}>Pending For Owner Approval</li>
-              <li onClick={() => handleFilter("Approved By Owner")}>Approved By Owner</li>
-              <li onClick={() => handleFilter("Rejected By Owner")}>Rejected By Owner</li>
-              <li onClick={() => handleFilter("Approved By Admin")}>Approved By Admin</li>
-              <li onClick={() => handleFilter("Rejected By Admin")}>Rejected By Admin</li>
-            </ul>
+        <div className={styles.featureRowLeft}>
+          <input
+            type="text"
+            className={`input-field ${styles.searchField}`}
+            placeholder="Search Data"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <div className={styles.filter}>
+            <button className={`btn-a flex-btn ${styles.filterBtn}`}>
+              <FilterAltIcon />
+              <p>Filter Data</p>
+            </button>
+            <div className={styles.filterMenu}>
+              <ul>
+                <li onClick={() => handleFilter("")}>Remove Filter</li>
+                <li onClick={() => handleFilter("Pending for Owner Approval")}>Pending For Owner Approval</li>
+                <li onClick={() => handleFilter("Approved By Owner")}>Approved By Owner</li>
+                <li onClick={() => handleFilter("Rejected By Owner")}>Rejected By Owner</li>
+                <li onClick={() => handleFilter("Approved By Admin")}>Approved By Admin</li>
+                <li onClick={() => handleFilter("Rejected By Admin")}>Rejected By Admin</li>
+              </ul>
+            </div>
           </div>
+        </div>
+        <div className={styles.featureRowRight}>
+          <button className={`btn-a flex-btn ${styles.exportBtn}`} onClick={exportToExcel}>
+            <SystemUpdateAltIcon />
+            <p>Export Data</p>
+          </button>
         </div>
       </div>
       <div className={styles.dataPageBottom}>
@@ -896,7 +973,7 @@ export default function Page() {
 
                   {/* CONDITION 6: Show disabled button to others if locked; never to admin */}
                   {(row.currentStatus?.startsWith("Approved By Owner") || row.currentStatus?.startsWith("Final Approved")) &&
-                    requiredData.role !== 'admin' && (
+                    (requiredData.role !== 'admin' && requiredData.role !== "super admin") && (
                       <>
                         <button className={`btn-a ${styles.disabledBtn}`} disabled>Locked</button>
                       </>
@@ -907,6 +984,56 @@ export default function Page() {
                         <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                       </>
                     )}
+
+
+
+                  {/* CONDITION 0: Super Admin conditions do everything regardless of state */}
+                  {requiredData.role === 'super admin' && row.editable ? (
+                    <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>
+                      {editButton[row.id] || "Save Changes"}
+                    </button>
+                  ) : requiredData.role === 'super admin' && !row.editable ? (
+                    <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>
+                      {editButton[row.id] || "Edit"}
+                    </button>
+                  ) : null}
+                  {(row.currentStatus?.startsWith("Rejected By") && requiredData.role == 'super admin') && (
+                    <>
+                      {/* <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button> */}
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {(row.currentStatus?.startsWith("Approved By Owner")) && (requiredData.role == 'super admin') && (
+                    <>
+                      {/* <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button> */}
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => displayAdminApproveScreen(row)}>Final Approve</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {(row.currentStatus?.startsWith("Final Approved")) && (requiredData.role == 'super admin') && (
+                    <>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                      {/* <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button> */}
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {requiredData.role === 'super admin' &&
+                    row.currentStatus === 'Pending for Owner Approval' && (
+                      <>
+                        {/* <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button> */}
+                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                        <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
+                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                      </>
+                    )}
+                  {!row.submitted && row.editable && requiredData.role === 'super admin' && (
+                    <>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{sendButton}</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
                 </td>
 
                 {/* <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button> */}
