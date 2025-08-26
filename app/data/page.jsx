@@ -14,6 +14,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -43,6 +45,10 @@ export default function Page() {
   const [notificationScreen, setNotificationScreen] = useState(false)
   const [notifications, setNotifications] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
+  const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState({});
+
 
 
 
@@ -146,42 +152,62 @@ export default function Page() {
 
 
 
-  // FETCH EXISTING RISK ASSESSMENT DATA FROM THE SERVER
-  const fetchRiskData = async (userId) => {
-    try {
-      const token = localStorage.getItem("auth-token");
-      const res = await fetch(`${MyContextApi.backendURL}/api/read-risk-assessment-data/${userId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`
+// FETCH EXISTING RISK ASSESSMENT DATA FROM THE SERVER
+const fetchRiskData = async (userId) => {
+  try {
+    const token = localStorage.getItem("auth-token");
+    const res = await fetch(`${MyContextApi.backendURL}/api/read-risk-assessment-data/${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const json = await res.json();
+    console.log(json);
+
+    if (json.success && Array.isArray(json.data)) {
+      const formattedData = json.data.map((item) => ({
+        id: Date.now() + Math.random(),
+        dataId: item._id,
+
+        // unwrap values
+        risks: item.risks?.value || "",
+        definition: item.definition?.value || "",
+        category: item.category?.value || "operational",
+        likelihood: String(item.likelihood?.value || 3),
+        impact: String(item.impact?.value || 4),
+        riskScore: item.riskScore?.value || 12,
+        existingControl: item.existingControl?.value || "",
+        control: item.control?.value || 50,
+        residualRisk: item.residualRisk?.value || 5,
+        mitigationPlan: item.mitigationPlan?.value || "",
+        riskOwner: item.riskOwner?.value || "",
+
+        currentStatus: item.currentStatus || "Draft",
+        submitted: true,
+        editable: false,
+        lastEditedBy: item.lastEditedBy?.value || "Not Edited Yet",
+
+        // keep raw comments for this row
+        _comments: {
+          risks: item.risks?.comments || [],
+          definition: item.definition?.comments || [],
+          category: item.category?.comments || [],
+          likelihood: item.likelihood?.comments || [],
+          impact: item.impact?.comments || [],
+          riskScore: item.riskScore?.comments || [],
+          existingControl: item.existingControl?.comments || [],
+          control: item.control?.comments || [],
+          residualRisk: item.residualRisk?.comments || [],
+          mitigationPlan: item.mitigationPlan?.comments || [],
+          riskOwner: item.riskOwner?.comments || [],
         }
-      });
-      const json = await res.json();
+      }));
 
-      if (json.success && Array.isArray(json.data)) {
-        const formattedData = json.data.map((item) => ({
-          id: Date.now() + Math.random(),
-          dataId: item._id,
-          risks: item.risks,
-          definition: item.definition,
-          category: item.category,
-          likelihood: String(item.likelihood),
-          impact: String(item.impact),
-          riskScore: item.riskScore,
-          existingControl: item.existingControl,
-          control: item.control,
-          residualRisk: item.residualRisk,
-          mitigationPlan: item.mitigationPlan,
-          riskOwner: item.riskOwner,
-          currentStatus: item.currentStatus,
-          submitted: true,
-          editable: false,
-          lastEditedBy: item.lastEditedBy || '',
-        }));
-
-
-
-        const newData = [...formattedData, {
+      // ➕ Always add a blank row for new entry
+      const newData = [
+        ...formattedData,
+        {
           id: Date.now(),
           risks: '',
           definition: '',
@@ -197,22 +223,39 @@ export default function Page() {
           currentStatus: 'Draft',
           submitted: false,
           editable: true,
-          lastEditedBy: 'Not Edited Yet'
-        }];
+          lastEditedBy: 'Not Edited Yet',
+          _comments: {
+            risks: [],
+            definition: [],
+            category: [],
+            likelihood: [],
+            impact: [],
+            riskScore: [],
+            existingControl: [],
+            control: [],
+            residualRisk: [],
+            mitigationPlan: [],
+            riskOwner: []
+          }
+        }
+      ];
 
+      setBaseRows(newData);
+      setRows(newData);
 
-
-        setBaseRows(newData);
-        setRows(newData);
-        console.log(newData);
-
-      }
-
-    } catch (err) {
-      console.error("Failed to fetch risk data:", err);
+      // ✅ Build comments state from fetched rows
+      const commentsMap = {};
+      newData.forEach(row => {
+        commentsMap[row.id] = row._comments;
+      });
+      setComments(commentsMap);
     }
-    setDisplayLoadingScreen(false)
-  };
+  } catch (err) {
+    console.error("Failed to fetch risk data:", err);
+  }
+  setDisplayLoadingScreen(false);
+};
+
 
 
   const exportToExcel = () => {
@@ -684,6 +727,67 @@ export default function Page() {
   };
 
 
+  const openCommentPopup = (rowId, field) => {
+    setCommentPopup({ open: true, rowId, field });
+    setCommentText("");
+  };
+
+  const closeCommentPopup = () => {
+    setCommentPopup({ open: false, rowId: null, field: null });
+  };
+
+const saveComment = async () => {
+  if (!commentPopup.rowId || !commentPopup.field) return;
+
+  const row = rows.find(r => String(r.id) === String(commentPopup.rowId));
+  // if (!row || !row.rowId) {
+  //   console.error("No matching row/dataId for comment");
+  //   return;
+  // }
+
+  const newCommentObj = {
+    text: commentText.trim(),
+    date: new Date().toLocaleString(),
+  };
+
+  // Update local state
+  setComments(prev => {
+    const existing = prev[commentPopup.rowId]?.[commentPopup.field] || [];
+    return {
+      ...prev,
+      [commentPopup.rowId]: {
+        ...prev[commentPopup.rowId],
+        [commentPopup.field]:
+          commentText.trim() === "" ? existing : [...existing, newCommentObj],
+      },
+    };
+  });
+
+  // Send to backend if not empty
+  if (commentText.trim() !== "") {
+    try {
+      const token = localStorage.getItem("auth-token");
+      await fetch(`${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fieldName: commentPopup.field,   // must be lowercase
+          newComment: commentText.trim(),
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save comment:", err);
+    }
+  }
+
+  closeCommentPopup();
+};
+
+
+
 
 
 
@@ -808,19 +912,31 @@ export default function Page() {
                 <td>{String(index + 1).padStart(3, '0')}</td>
 
                 {/* Risks */}
-                <td>
-                  <textarea name="risks" className="input-field"
-                    value={row.risks}
-                    onChange={(e) => handleInputChange(row.id, "risks", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                <td className={styles.cellWithIcon}>
+                  <div style={{ position: "relative" }}>
+                    <textarea name="risks" className="input-field"
+                      value={row.risks}
+                      onChange={(e) => handleInputChange(row.id, "risks", e.target.value)}
+                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                    <AddCommentIcon
+                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "risks")}
+                    />
+                  </div>
                 </td>
 
                 {/* Definition */}
-                <td>
-                  <textarea name="definition" className="input-field"
-                    value={row.definition}
-                    onChange={(e) => handleInputChange(row.id, "definition", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                <td className={styles.cellWithIcon}>
+                  <div style={{ position: "relative" }}>
+                    <textarea name="definition" className="input-field"
+                      value={row.definition}
+                      onChange={(e) => handleInputChange(row.id, "definition", e.target.value)}
+                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                    <AddCommentIcon
+                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "definition")}
+                    />
+                  </div>
                 </td>
 
                 {/* Category */}
@@ -845,7 +961,7 @@ export default function Page() {
                 </td>
 
                 {/* Likelihood */}
-                <td style={{ backgroundColor: colorMap[row.likelihood] || "transparent" }}>
+                <td style={{ backgroundColor: colorMap[row.likelihood] || "transparent" }} >
                   <select
                     className="input-field"
                     value={row.likelihood}
@@ -877,11 +993,17 @@ export default function Page() {
                 </td>
 
                 {/* Existing Control */}
-                <td>
-                  <textarea name="existingControl" className="input-field"
-                    value={row.existingControl}
-                    onChange={(e) => handleInputChange(row.id, "existingControl", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                <td className={styles.cellWithIcon}>
+                  <div style={{ position: "relative" }}>
+                    <textarea name="existingControl" className="input-field"
+                      value={row.existingControl}
+                      onChange={(e) => handleInputChange(row.id, "existingControl", e.target.value)}
+                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                    <AddCommentIcon
+                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "existingControl")}
+                    />
+                  </div>
                 </td>
 
 
@@ -908,19 +1030,31 @@ export default function Page() {
                 </td>
 
                 {/* Mitigation Plan */}
-                <td>
-                  <textarea name="mitigationPlan" className="input-field"
-                    value={row.mitigationPlan}
-                    onChange={(e) => handleInputChange(row.id, "mitigationPlan", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                <td className={styles.cellWithIcon}>
+                  <div style={{ position: "relative" }}>
+                    <textarea name="mitigationPlan" className="input-field"
+                      value={row.mitigationPlan}
+                      onChange={(e) => handleInputChange(row.id, "mitigationPlan", e.target.value)}
+                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                    <AddCommentIcon
+                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "mitigationPlan")}
+                    />
+                  </div>
                 </td>
 
                 {/* Risk Owner */}
-                <td>
-                  <textarea name="riskOwner" className="input-field"
-                    value={row.riskOwner}
-                    onChange={(e) => handleInputChange(row.id, "riskOwner", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                <td className={styles.cellWithIcon}>
+                  <div style={{ position: "relative" }}>
+                    <textarea name="riskOwner" className="input-field"
+                      value={row.riskOwner}
+                      onChange={(e) => handleInputChange(row.id, "riskOwner", e.target.value)}
+                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                    <AddCommentIcon
+                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "riskOwner")}
+                    />
+                  </div>
                 </td>
 
                 {/* Actions */}
@@ -1086,6 +1220,31 @@ export default function Page() {
 
         {logoutScreen && <SuccessScreen icon={<ExitToAppIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Want To LOGOUT ?"} headingColor={"orangered"} message={"You can simply login again with your credentials"} secondaryMessage={"Thank You"} successButtonText={"Yes, Logout"} cancelText={"Cancel"} onConfirm={handleLogout} onCancel={hideLogoutScreen} />}
 
+        <Dialog open={commentPopup.open} onClose={closeCommentPopup} fullWidth maxWidth="sm">
+          <DialogTitle>Add Comments</DialogTitle>
+          <DialogContent>
+            {comments[commentPopup.rowId]?.[commentPopup.field]?.length > 0 ? (
+              comments[commentPopup.rowId][commentPopup.field].map((c, i) => (
+                <p key={i}><strong>{c.date}:</strong> {c.text}</p>
+              ))
+            ) : (
+              <p>No comments yet.</p>
+            )}
+            <TextField
+              fullWidth
+              label="Add Comment (optional)"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              multiline
+              rows={3}
+              margin="normal"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeCommentPopup}>Cancel</Button>
+            <Button onClick={saveComment} variant="contained">Save</Button>
+          </DialogActions>
+        </Dialog>
 
 
       </div>
