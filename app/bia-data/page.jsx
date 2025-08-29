@@ -15,6 +15,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -43,6 +46,11 @@ export default function Page() {
   const [notifications, setNotifications] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
   const MyContextApi = useContext(MyContext);
+  const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState({});
+
+  const sanitize = (name) => name.replace(/[^a-zA-Z0-9]/g, "_");
 
   // METHODS TO FETCH REQUIRED DATA FROM AUTHENTICATION TOKEN
   useEffect(() => {
@@ -122,18 +130,13 @@ export default function Page() {
     try {
       const response = await fetch(`${MyContextApi.backendURL}/api/read-business-impact-analysis-data/${requiredData.userId}`, {
         method: 'GET',
-        headers: {
-          'authorization': `Bearer ${authToken}`,
-          'content-type': 'application/json'
-        }
+        headers: { 'authorization': `Bearer ${authToken}`, 'content-type': 'application/json' }
       });
       const json = await response.json();
-      if (!json.success) {
-        console.error("Failed to fetch:", json.message);
-        return;
-      }
+      if (!json.success) return console.error(json.message);
+
       const fields = formStructure[requiredData.company?.toLowerCase()]?.[requiredData.module] || [];
-      const formattedRows = json.data.map((entry) => {
+      const formattedRows = json.data.map(entry => {
         const dynamicRow = {
           id: Date.now() + Math.random(),
           submitted: true,
@@ -144,18 +147,27 @@ export default function Page() {
           userId: entry.userId,
           lastEditedBy: entry.lastEditedBy || null
         };
+
         if (entry.formData && typeof entry.formData === 'object') {
           Object.entries(entry.formData).forEach(([key, value]) => {
-            const matchedField = fields.find(f =>
-              key === f.name.replace(/[^a-zA-Z0-9]/g, "_")
-            );
+            const matchedField = fields.find(f => key === sanitize(f.name));
             if (matchedField) {
-              dynamicRow[matchedField.name] = value;
+              dynamicRow[matchedField.name] = {
+                value: value?.value || "",
+                comments: Array.isArray(value?.comments) ? value.comments : []
+              };
             }
           });
         }
+
+        // Ensure all fields exist even if missing in formData
+        fields.forEach(f => {
+          if (!dynamicRow[f.name]) dynamicRow[f.name] = { value: "", comments: [] };
+        });
+
         return dynamicRow;
       });
+
       setBaseRows(formattedRows);
       setRows([...formattedRows, createEmptyRow()]);
     } catch (err) {
@@ -163,40 +175,49 @@ export default function Page() {
     }
     setDisplayLoadingScreen(false);
   };
+  console.log(rows[0]);
 
   const exportToExcel = () => {
     if (!baseRows || baseRows.length === 0) return;
 
     const fields = getFields();
 
-    const exportData = baseRows
-      .map((row, index) => {
-        const rowData = { "S.No": index + 1 };
-        fields.forEach(field => {
-          rowData[field.label] = row[field.name] || "";
-        });
-        rowData["Status"] = row.currentStatus;
-        rowData["Last Edit"] = row.lastEditedBy
-          ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
-          : "Not Edited Yet";
-        return rowData;
+    const exportData = baseRows.map((row, index) => {
+      const rowData = { "S.No": index + 1 };
+
+      fields.forEach(field => {
+        const fieldValue = row[field.name];
+        // ✅ If it's an object with { value, comments }, export only the value
+        rowData[field.label] =
+          typeof fieldValue === "object" && fieldValue !== null
+            ? fieldValue.value || ""
+            : fieldValue || "";
       });
+
+      rowData["Status"] = row.currentStatus;
+      rowData["Last Edit"] = row.lastEditedBy
+        ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
+        : "Not Edited Yet";
+
+      return rowData;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "BIA Data");
 
-    worksheet['!cols'] = [
+    worksheet["!cols"] = [
       { wch: 6 }, // S.No
       ...fields.map(field => ({ wch: Math.max(field.label.length, 15) })), // Dynamic field widths
       { wch: 25 }, // Status
-      { wch: 40 }  // Last Edit
+      { wch: 40 } // Last Edit
     ];
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, "BIAData.xlsx");
   };
+
 
   const getFields = () => {
     const company = requiredData.company?.toLowerCase();
@@ -207,7 +228,9 @@ export default function Page() {
   const createEmptyRow = () => {
     const fields = getFields();
     const newRow = { id: Date.now(), submitted: false, editable: true };
-    fields.forEach(field => newRow[field.name] = '');
+    fields.forEach(field => {
+      newRow[field.name] = { value: "", comments: [] };
+    });
     newRow.currentStatus = 'Draft';
     return newRow;
   };
@@ -220,37 +243,60 @@ export default function Page() {
     );
   };
 
-  const handleChange = (id, name, value) => {
-    setRows(prev =>
-      prev.map(row =>
-        row.id === id ? { ...row, [name]: value } : row
+  const handleChange = (rowId, fieldName, newValue) => {
+    setRows(prevRows =>
+      prevRows.map(row =>
+        row.id === rowId
+          ? {
+            ...row,
+            [fieldName]: {
+              value: typeof newValue === "object" ? JSON.stringify(newValue) : newValue,
+              comments: row[fieldName]?.comments || []
+            }
+          }
+          : row
       )
     );
   };
 
+
   const handleSubmit = async (row) => {
     const fields = getFields();
-    const isEmpty = fields.some(f => !row[f.name]?.trim());
+    const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
     if (isEmpty) return alert("Please fill all fields before submitting.");
+
     const token = localStorage.getItem("auth-token");
+
+    // Flatten all values just before sending to backend
     const formData = {};
     fields.forEach(f => {
-      const sanitizedKey = f.name.replace(/[^a-zA-Z0-9]/g, "_");
-      formData[sanitizedKey] = row[f.name];
+      const fieldData = row[f.name] || {};
+      let value = fieldData.value;
+
+      // If somehow value is nested, flatten it
+      if (value && typeof value === "object" && "value" in value) {
+        value = value.value;
+      }
+
+      formData[sanitize(f.name)] = {
+        value: value || "",
+        comments: fieldData.comments || []
+      };
     });
+
     const payload = {
       company: requiredData.company,
       department: requiredData.department,
       module: requiredData.module,
-      formData,
       createdBy: requiredData.email,
       userId: requiredData.userId,
-      lastEditedBy: { email: requiredData.email }
+      formData
     };
+
     try {
       setLoading(true);
-      setEditButton("Saving...");
       if (row.dataId) {
+        setEditButton("Saving...");
         const res = await fetch(`${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`, {
           method: "PUT",
           headers: {
@@ -270,11 +316,11 @@ export default function Page() {
             prev.map(r =>
               r.id === row.id
                 ? {
-                    ...r,
-                    editable: false,
-                    currentStatus: "Pending for Owner Approval",
-                    dataId: json.data._id
-                  }
+                  ...r,
+                  editable: false,
+                  currentStatus: "Pending for Owner Approval",
+                  dataId: json.data._id
+                }
                 : r
             )
           );
@@ -282,7 +328,6 @@ export default function Page() {
           alert("Update failed.");
         }
       } else {
-        setLoading(true);
         setSendButton("Sending...");
         const res = await fetch(`${MyContextApi.backendURL}/api/add-business-impact-analysis-data`, {
           method: "POST",
@@ -296,14 +341,16 @@ export default function Page() {
         if (json.success) {
           alert("Data sent to owner successfully!");
           const updatedRows = rows.map(r =>
-            r.id === row.id ? {
-              ...r,
-              submitted: true,
-              editable: false,
-              currentStatus: "Pending for Owner Approval",
-              _id: json.data._id,
-              dataId: json.data._id
-            } : r
+            r.id === row.id
+              ? {
+                ...r,
+                submitted: true,
+                editable: false,
+                currentStatus: "Pending for Owner Approval",
+                _id: json.data._id,
+                dataId: json.data._id
+              }
+              : r
           );
           updatedRows.push(createEmptyRow());
           setRows(updatedRows);
@@ -314,11 +361,14 @@ export default function Page() {
     } catch (error) {
       console.error("Submit Error:", error);
       alert("An error occurred while submitting the data.");
+    } finally {
+      setSendButton("Send To Owner");
+      setEditButton("Save Changes");
+      setLoading(false);
     }
-    setSendButton("Send To Owner");
-    setEditButton("Save Changes");
-    setLoading(false);
   };
+
+
 
   const displaySuccessScreen = (id) => {
     setRowToDelete(id);
@@ -520,6 +570,77 @@ export default function Page() {
     return rows;
   };
 
+
+  const openCommentPopup = (rowId, field, mode) => {
+    setCommentPopup({ open: true, rowId, field, mode }); // mode: "add" or "view"
+    setCommentText("");
+  };
+
+  const closeCommentPopup = () => {
+    setCommentPopup({ open: false, rowId: null, field: null });
+  };
+  const saveComment = async () => {
+    if (!commentPopup.rowId || !commentPopup.field) return;
+
+    const row = rows.find(r => String(r.id) === String(commentPopup.rowId));
+    if (!row) {
+      console.error("No matching row/dataId for comment");
+      return;
+    }
+
+    const trimmed = commentText.trim();
+    const newCommentObj = {
+      text: trimmed,
+      date: new Date().toLocaleString(),
+    };
+
+    // Update local rows state (for instant UI feedback)
+    setRows(prev =>
+      prev.map(r =>
+        String(r.id) === String(commentPopup.rowId)
+          ? {
+            ...r,
+            [commentPopup.field]: {
+              ...r[commentPopup.field],
+              comments: trimmed === ""
+                ? (r[commentPopup.field]?.comments || [])
+                : [...(r[commentPopup.field]?.comments || []), newCommentObj]
+            }
+          }
+          : r
+      )
+    );
+
+    // Persist only if there's a real comment and the row is saved (has dataId)
+    if (trimmed !== "" && row.dataId) {
+      try {
+        const token = localStorage.getItem("auth-token");
+        await fetch(
+          `${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              fieldName: sanitize(commentPopup.field),
+              newComment: trimmed,
+            })
+          }
+        );
+      } catch (err) {
+        console.error("Failed to save comment:", err);
+        // optional: rollback UI if you want
+      }
+    }
+
+    closeCommentPopup();
+  };
+
+
+
+
   return (
     <div className={styles.dataPage}>
       <img src="Line.png" alt="" className={styles.topLine} />
@@ -629,154 +750,166 @@ export default function Page() {
             </tr>
           </thead>
           <tbody>
-            {rows
-              .filter(row => {
-                const values = getFields().map(f => row[f.name]?.toString().toLowerCase()).join(' ');
-                return values.includes(searchTerm.toLowerCase());
-              })
-              .filter(row => {
-                if (!filterStatus || filterStatus === 'Newest First' || filterStatus === 'Oldest First') return true;
-                return row.currentStatus?.toLowerCase().includes(filterStatus.toLowerCase());
-              })
-              .sort((a, b) => {
-                if (filterStatus === 'Newest First') return b.id - a.id;
-                if (filterStatus === 'Oldest First') return a.id - b.id;
-                return 0;
-              })
-              .map((row, index) => (
-                <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
-                  <td>{index + 1}</td>
-                  {getFields().map(field => (
-                    <td key={field.name}>
-                      {field.type !== "text" ? (
+            {rows.map((row, index) => (
+              <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
+                {console.log(row)}
+                <td>{index + 1}</td>
+                {getFields().map(field => (
+                  <td key={field.name} className={styles.cellWithIcon}>
+                    {field.type !== "text" ? (
+                      <div style={{ position: "relative" }}>
                         <input
                           type={field.type}
-                          value={row[field.name] || ''}
+                          value={typeof row[field.name] === 'object' ? row[field.name]?.value || '' : row[field.name] || ''}
                           onChange={(e) => handleChange(row.id, field.name, e.target.value)}
                           disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
                           className="input-field"
                         />
-                      ) : (
+                        <AddCommentIcon
+                          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                          onClick={() => openCommentPopup(row.id, field.name, "add")}
+                          titleAccess="Add Comment"
+                        />
+                        <VisibilityIcon
+                          style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                          onClick={() => openCommentPopup(row.id, field.name, "view")}
+                          titleAccess="View Comments"
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ position: "relative" }}>
                         <textarea
                           className="input-field"
-                          value={row[field.name] || ''}
+                          value={typeof row[field.name] === 'object' ? row[field.name]?.value || '' : row[field.name] || ''}
                           onChange={(e) => handleChange(row.id, field.name, e.target.value)}
                           disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
-                        ></textarea>
-                      )}
-                    </td>
-                  ))}
-                  <td>
-                    {!row.submitted && row.editable && requiredData.role === 'champion' && (
+                        />
+                        <AddCommentIcon
+                          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                          onClick={() => openCommentPopup(row.id, field.name, "add")}
+                          titleAccess="Add Comment"
+                        />
+                        <VisibilityIcon
+                          style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                          onClick={() => openCommentPopup(row.id, field.name, "view")}
+                          titleAccess="View Comments"
+                        />
+                      </div>
+                    )}
+                  </td>
+
+                ))}
+                <td>
+                  {!row.submitted && row.editable && requiredData.role === 'champion' && (
+                    <>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{sendButton}</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {row.submitted && row.editable &&
+                    (requiredData.role === 'champion' || requiredData.role === 'owner') &&
+                    !row.currentStatus?.startsWith("Approved By Owner") &&
+                    !row.currentStatus?.startsWith("Rejected By Owner") && (
                       <>
-                        <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{sendButton}</button>
+                        <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{editButton}</button>
                         <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                       </>
                     )}
-                    {row.submitted && row.editable &&
-                      (requiredData.role === 'champion' || requiredData.role === 'owner') &&
-                      !row.currentStatus?.startsWith("Approved By Owner") &&
-                      !row.currentStatus?.startsWith("Rejected By Owner") && (
-                        <>
-                          <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{editButton}</button>
-                          <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                        </>
-                      )}
-                    {row.submitted && !row.editable &&
-                      (requiredData.role === 'champion' || requiredData.role === 'owner') &&
-                      row.currentStatus === 'Pending for Owner Approval' && (
-                        <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button>
-                      )}
-                    {requiredData.role === 'owner' &&
-                      !row.editable &&
-                      row.currentStatus === 'Pending for Owner Approval' && (
-                        <>
-                          <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
-                          <button className={`btn-a ${styles.failBtn}`} onClick={() => displayRejectScreen(row)}>Reject</button>
-                        </>
-                      )}
-                    {requiredData.role === 'admin' &&
-                      !row.editable &&
-                      row.currentStatus?.startsWith("Approved By Owner") && (
-                        <>
-                          <button className={`btn-a ${styles.successBtn}`} onClick={() => displayAdminApproveScreen(row)}>Final Approve</button>
-                          <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
-                        </>
-                      )}
-                    {(row.currentStatus?.startsWith("Approved By Owner") || row.currentStatus?.startsWith("Final Approved")) &&
-                      (requiredData.role !== 'admin' && requiredData.role !== "super admin") && (
-                        <button className={`btn-a ${styles.disabledBtn}`} disabled>Locked</button>
-                      )}
-                    {(row.currentStatus?.startsWith("Rejected By") && requiredData.role === 'champion') &&
-                      requiredData.role !== 'admin' && (
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                      )}
-                    {requiredData.role === 'super admin' && row.editable ? (
-                      <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>
-                        {editButton}
-                      </button>
-                    ) : requiredData.role === 'super admin' && !row.editable ? (
-                      <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>
-                        Edit
-                      </button>
-                    ) : null}
-                    {(row.currentStatus?.startsWith("Rejected By") && requiredData.role === 'super admin') && (
+                  {row.submitted && !row.editable &&
+                    (requiredData.role === 'champion' || requiredData.role === 'owner') &&
+                    row.currentStatus === 'Pending for Owner Approval' && (
+                      <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>Edit</button>
+                    )}
+                  {requiredData.role === 'owner' &&
+                    !row.editable &&
+                    row.currentStatus === 'Pending for Owner Approval' && (
                       <>
+                        <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
+                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayRejectScreen(row)}>Reject</button>
+                      </>
+                    )}
+                  {requiredData.role === 'admin' &&
+                    !row.editable &&
+                    row.currentStatus?.startsWith("Approved By Owner") && (
+                      <>
+                        <button className={`btn-a ${styles.successBtn}`} onClick={() => displayAdminApproveScreen(row)}>Final Approve</button>
+                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                      </>
+                    )}
+                  {(row.currentStatus?.startsWith("Approved By Owner") || row.currentStatus?.startsWith("Final Approved")) &&
+                    (requiredData.role !== 'admin' && requiredData.role !== "super admin") && (
+                      <button className={`btn-a ${styles.disabledBtn}`} disabled>Locked</button>
+                    )}
+                  {(row.currentStatus?.startsWith("Rejected By") && requiredData.role === 'champion') &&
+                    requiredData.role !== 'admin' && (
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    )}
+                  {requiredData.role === 'super admin' && row.editable ? (
+                    <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>
+                      {editButton}
+                    </button>
+                  ) : requiredData.role === 'super admin' && !row.editable ? (
+                    <button className={`btn-a ${styles.editBtn}`} onClick={() => enableEdit(row.id)}>
+                      Edit
+                    </button>
+                  ) : null}
+                  {(row.currentStatus?.startsWith("Rejected By") && requiredData.role === 'super admin') && (
+                    <>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {(row.currentStatus?.startsWith("Approved By Owner")) && (requiredData.role === 'super admin') && (
+                    <>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => displayAdminApproveScreen(row)}>Final Approve</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {(row.currentStatus?.startsWith("Final Approved")) && (requiredData.role === 'super admin') && (
+                    <>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                  {requiredData.role === 'super admin' &&
+                    row.currentStatus === 'Pending for Owner Approval' && (
+                      <>
+                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
                         <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
                         <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                       </>
                     )}
-                    {(row.currentStatus?.startsWith("Approved By Owner")) && (requiredData.role === 'super admin') && (
-                      <>
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
-                        <button className={`btn-a ${styles.successBtn}`} onClick={() => displayAdminApproveScreen(row)}>Final Approve</button>
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                      </>
+                  {!row.submitted && row.editable && requiredData.role === 'super admin' && (
+                    <>
+                      <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{sendButton}</button>
+                      <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
+                    </>
+                  )}
+                </td>
+                <td className={styles.currentStatusTD}>
+                  <div style={{ minWidth: '200px' }}>
+                    {row.currentStatus}
+                  </div>
+                </td>
+                <td>
+                  <div className={styles.lastEditedByBox}>
+                    {row.lastEditedBy &&
+                      row.lastEditedBy.email &&
+                      row.lastEditedBy.date &&
+                      row.lastEditedBy.time ? (
+                      <div>
+                        <p>Email: {row.lastEditedBy.email}</p>
+                        <p>Date: {row.lastEditedBy.date}</p>
+                        <p>Time: {row.lastEditedBy.time}</p>
+                      </div>
+                    ) : (
+                      <p>Not Edited Yet</p>
                     )}
-                    {(row.currentStatus?.startsWith("Final Approved")) && (requiredData.role === 'super admin') && (
-                      <>
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                      </>
-                    )}
-                    {requiredData.role === 'super admin' &&
-                      row.currentStatus === 'Pending for Owner Approval' && (
-                        <>
-                          <button className={`btn-a ${styles.failBtn}`} onClick={() => displayAdminRejectScreen(row)}>Reject</button>
-                          <button className={`btn-a ${styles.successBtn}`} onClick={() => displayApprovalScreen(row)}>Approve</button>
-                          <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                        </>
-                      )}
-                    {!row.submitted && row.editable && requiredData.role === 'super admin' && (
-                      <>
-                        <button className={`btn-a ${styles.successBtn}`} onClick={() => handleSubmit(row)} disabled={loading}>{sendButton}</button>
-                        <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
-                      </>
-                    )}
-                  </td>
-                  <td className={styles.currentStatusTD}>
-                    <div style={{ minWidth: '200px' }}>
-                      {row.currentStatus}
-                    </div>
-                  </td>
-                  <td>
-                    <div className={styles.lastEditedByBox}>
-                      {row.lastEditedBy &&
-                        row.lastEditedBy.email &&
-                        row.lastEditedBy.date &&
-                        row.lastEditedBy.time ? (
-                        <div>
-                          <p>Email: {row.lastEditedBy.email}</p>
-                          <p>Date: {row.lastEditedBy.date}</p>
-                          <p>Time: {row.lastEditedBy.time}</p>
-                        </div>
-                      ) : (
-                        <p>Not Edited Yet</p>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
         {successScreen && (
@@ -885,6 +1018,46 @@ export default function Page() {
             onCancel={hideLogoutScreen}
           />
         )}
+
+        <Dialog open={commentPopup.open} onClose={closeCommentPopup} fullWidth maxWidth="sm">
+          <DialogTitle>
+            {commentPopup.mode === "view" ? "View Comments" : "Add Comment"}
+          </DialogTitle>
+
+          <DialogContent>
+            {commentPopup.mode === "view" ? (
+              (() => {
+                const currentRow = rows.find(r => String(r.id) === String(commentPopup.rowId));
+                const existing = currentRow?.[commentPopup.field]?.comments || [];
+                return existing.length > 0 ? (
+                  existing.map((c, i) => (
+                    <p key={i}><strong>{c.date}:</strong> {c.text}</p>
+                  ))
+                ) : (
+                  <p>No comments yet.</p>
+                );
+              })()
+            ) : (
+              <TextField
+                fullWidth
+                label="Add Comment"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                multiline
+                rows={3}
+                margin="normal"
+              />
+            )}
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={closeCommentPopup}>Close</Button>
+            {commentPopup.mode === "add" && (
+              <Button onClick={saveComment} variant="contained">Save</Button>
+            )}
+          </DialogActions>
+        </Dialog>
+
       </div>
     </div>
   );

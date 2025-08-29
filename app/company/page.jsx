@@ -95,6 +95,7 @@ function CompanyContent() {
   }
   const hideLogin = () => {
     setLoginScreen(false)
+    setData({ email: "", password: "", role: "champion", module: "" })
   }
 
   const handleChange = (e) => {

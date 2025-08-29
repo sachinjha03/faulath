@@ -229,7 +229,7 @@ textarea::-webkit-scrollbar-thumb {
   align-items: center;
   padding: 3rem 2rem;
   backdrop-filter: blur(4px);
-  z-index: 333;
+  z-index: 1000;
 }
 
 .success-box {

@@ -15,6 +15,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddCommentIcon from "@mui/icons-material/AddComment";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -152,109 +153,109 @@ export default function Page() {
 
 
 
-// FETCH EXISTING RISK ASSESSMENT DATA FROM THE SERVER
-const fetchRiskData = async (userId) => {
-  try {
-    const token = localStorage.getItem("auth-token");
-    const res = await fetch(`${MyContextApi.backendURL}/api/read-risk-assessment-data/${userId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    const json = await res.json();
-    console.log(json);
-
-    if (json.success && Array.isArray(json.data)) {
-      const formattedData = json.data.map((item) => ({
-        id: Date.now() + Math.random(),
-        dataId: item._id,
-
-        // unwrap values
-        risks: item.risks?.value || "",
-        definition: item.definition?.value || "",
-        category: item.category?.value || "operational",
-        likelihood: String(item.likelihood?.value || 3),
-        impact: String(item.impact?.value || 4),
-        riskScore: item.riskScore?.value || 12,
-        existingControl: item.existingControl?.value || "",
-        control: item.control?.value || 50,
-        residualRisk: item.residualRisk?.value || 5,
-        mitigationPlan: item.mitigationPlan?.value || "",
-        riskOwner: item.riskOwner?.value || "",
-
-        currentStatus: item.currentStatus || "Draft",
-        submitted: true,
-        editable: false,
-        lastEditedBy: item.lastEditedBy?.value || "Not Edited Yet",
-
-        // keep raw comments for this row
-        _comments: {
-          risks: item.risks?.comments || [],
-          definition: item.definition?.comments || [],
-          category: item.category?.comments || [],
-          likelihood: item.likelihood?.comments || [],
-          impact: item.impact?.comments || [],
-          riskScore: item.riskScore?.comments || [],
-          existingControl: item.existingControl?.comments || [],
-          control: item.control?.comments || [],
-          residualRisk: item.residualRisk?.comments || [],
-          mitigationPlan: item.mitigationPlan?.comments || [],
-          riskOwner: item.riskOwner?.comments || [],
+  // FETCH EXISTING RISK ASSESSMENT DATA FROM THE SERVER
+  const fetchRiskData = async (userId) => {
+    try {
+      const token = localStorage.getItem("auth-token");
+      const res = await fetch(`${MyContextApi.backendURL}/api/read-risk-assessment-data/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      }));
-
-      // ➕ Always add a blank row for new entry
-      const newData = [
-        ...formattedData,
-        {
-          id: Date.now(),
-          risks: '',
-          definition: '',
-          category: 'operational',
-          likelihood: '3',
-          impact: '4',
-          riskScore: 12,
-          existingControl: '',
-          control: 50,
-          residualRisk: 5,
-          mitigationPlan: '',
-          riskOwner: '',
-          currentStatus: 'Draft',
-          submitted: false,
-          editable: true,
-          lastEditedBy: 'Not Edited Yet',
-          _comments: {
-            risks: [],
-            definition: [],
-            category: [],
-            likelihood: [],
-            impact: [],
-            riskScore: [],
-            existingControl: [],
-            control: [],
-            residualRisk: [],
-            mitigationPlan: [],
-            riskOwner: []
-          }
-        }
-      ];
-
-      setBaseRows(newData);
-      setRows(newData);
-
-      // ✅ Build comments state from fetched rows
-      const commentsMap = {};
-      newData.forEach(row => {
-        commentsMap[row.id] = row._comments;
       });
-      setComments(commentsMap);
+      const json = await res.json();
+      console.log(json);
+
+      if (json.success && Array.isArray(json.data)) {
+        const formattedData = json.data.map((item) => ({
+          id: Date.now() + Math.random(),
+          dataId: item._id,
+
+          // unwrap values
+          risks: item.risks?.value || "",
+          definition: item.definition?.value || "",
+          category: item.category?.value || "operational",
+          likelihood: String(item.likelihood?.value || 3),
+          impact: String(item.impact?.value || 4),
+          riskScore: item.riskScore?.value || 12,
+          existingControl: item.existingControl?.value || "",
+          control: item.control?.value || 50,
+          residualRisk: item.residualRisk?.value || 5,
+          mitigationPlan: item.mitigationPlan?.value || "",
+          riskOwner: item.riskOwner?.value || "",
+
+          currentStatus: item.currentStatus || "Draft",
+          submitted: true,
+          editable: false,
+          lastEditedBy: item.lastEditedBy?.value || "Not Edited Yet",
+
+          // keep raw comments for this row
+          _comments: {
+            risks: item.risks?.comments || [],
+            definition: item.definition?.comments || [],
+            category: item.category?.comments || [],
+            likelihood: item.likelihood?.comments || [],
+            impact: item.impact?.comments || [],
+            riskScore: item.riskScore?.comments || [],
+            existingControl: item.existingControl?.comments || [],
+            control: item.control?.comments || [],
+            residualRisk: item.residualRisk?.comments || [],
+            mitigationPlan: item.mitigationPlan?.comments || [],
+            riskOwner: item.riskOwner?.comments || [],
+          }
+        }));
+
+        // ➕ Always add a blank row for new entry
+        const newData = [
+          ...formattedData,
+          {
+            id: Date.now(),
+            risks: '',
+            definition: '',
+            category: 'operational',
+            likelihood: '3',
+            impact: '4',
+            riskScore: 12,
+            existingControl: '',
+            control: 50,
+            residualRisk: 5,
+            mitigationPlan: '',
+            riskOwner: '',
+            currentStatus: 'Draft',
+            submitted: false,
+            editable: true,
+            lastEditedBy: 'Not Edited Yet',
+            _comments: {
+              risks: [],
+              definition: [],
+              category: [],
+              likelihood: [],
+              impact: [],
+              riskScore: [],
+              existingControl: [],
+              control: [],
+              residualRisk: [],
+              mitigationPlan: [],
+              riskOwner: []
+            }
+          }
+        ];
+
+        setBaseRows(newData);
+        setRows(newData);
+
+        // ✅ Build comments state from fetched rows
+        const commentsMap = {};
+        newData.forEach(row => {
+          commentsMap[row.id] = row._comments;
+        });
+        setComments(commentsMap);
+      }
+    } catch (err) {
+      console.error("Failed to fetch risk data:", err);
     }
-  } catch (err) {
-    console.error("Failed to fetch risk data:", err);
-  }
-  setDisplayLoadingScreen(false);
-};
+    setDisplayLoadingScreen(false);
+  };
 
 
 
@@ -727,64 +728,65 @@ const fetchRiskData = async (userId) => {
   };
 
 
-  const openCommentPopup = (rowId, field) => {
-    setCommentPopup({ open: true, rowId, field });
+  const openCommentPopup = (rowId, field, mode) => {
+    setCommentPopup({ open: true, rowId, field, mode }); // mode: "add" or "view"
     setCommentText("");
   };
+
 
   const closeCommentPopup = () => {
     setCommentPopup({ open: false, rowId: null, field: null });
   };
 
-const saveComment = async () => {
-  if (!commentPopup.rowId || !commentPopup.field) return;
+  const saveComment = async () => {
+    if (!commentPopup.rowId || !commentPopup.field) return;
 
-  const row = rows.find(r => String(r.id) === String(commentPopup.rowId));
-  // if (!row || !row.rowId) {
-  //   console.error("No matching row/dataId for comment");
-  //   return;
-  // }
+    const row = rows.find(r => String(r.id) === String(commentPopup.rowId));
+    // if (!row || !row.rowId) {
+    //   console.error("No matching row/dataId for comment");
+    //   return;
+    // }
 
-  const newCommentObj = {
-    text: commentText.trim(),
-    date: new Date().toLocaleString(),
-  };
-
-  // Update local state
-  setComments(prev => {
-    const existing = prev[commentPopup.rowId]?.[commentPopup.field] || [];
-    return {
-      ...prev,
-      [commentPopup.rowId]: {
-        ...prev[commentPopup.rowId],
-        [commentPopup.field]:
-          commentText.trim() === "" ? existing : [...existing, newCommentObj],
-      },
+    const newCommentObj = {
+      text: commentText.trim(),
+      date: new Date().toLocaleString(),
     };
-  });
 
-  // Send to backend if not empty
-  if (commentText.trim() !== "") {
-    try {
-      const token = localStorage.getItem("auth-token");
-      await fetch(`${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+    // Update local state
+    setComments(prev => {
+      const existing = prev[commentPopup.rowId]?.[commentPopup.field] || [];
+      return {
+        ...prev,
+        [commentPopup.rowId]: {
+          ...prev[commentPopup.rowId],
+          [commentPopup.field]:
+            commentText.trim() === "" ? existing : [...existing, newCommentObj],
         },
-        body: JSON.stringify({
-          fieldName: commentPopup.field,   // must be lowercase
-          newComment: commentText.trim(),
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to save comment:", err);
-    }
-  }
+      };
+    });
 
-  closeCommentPopup();
-};
+    // Send to backend if not empty
+    if (commentText.trim() !== "") {
+      try {
+        const token = localStorage.getItem("auth-token");
+        await fetch(`${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fieldName: commentPopup.field,   // must be lowercase
+            newComment: commentText.trim(),
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to save comment:", err);
+      }
+    }
+
+    closeCommentPopup();
+  };
 
 
 
@@ -914,16 +916,30 @@ const saveComment = async () => {
                 {/* Risks */}
                 <td className={styles.cellWithIcon}>
                   <div style={{ position: "relative" }}>
-                    <textarea name="risks" className="input-field"
+                    <textarea
+                      name="risks"
+                      className="input-field"
                       value={row.risks}
                       onChange={(e) => handleInputChange(row.id, "risks", e.target.value)}
-                      disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
+                      disabled={requiredData.role === "admin" || (row.submitted && !row.editable)}
+                    ></textarea>
+
+                    {/* Add Comment Button */}
                     <AddCommentIcon
-                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openCommentPopup(row.id, "risks")}
+                      style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "risks", "add")}
+                      titleAccess="Add Comment"
+                    />
+
+                    {/* View Comment Button */}
+                    <VisibilityIcon
+                      style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "risks", "view")}
+                      titleAccess="View Comments"
                     />
                   </div>
                 </td>
+
 
                 {/* Definition */}
                 <td className={styles.cellWithIcon}>
@@ -933,8 +949,14 @@ const saveComment = async () => {
                       onChange={(e) => handleInputChange(row.id, "definition", e.target.value)}
                       disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
                     <AddCommentIcon
-                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openCommentPopup(row.id, "definition")}
+                      style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "definition", "add")}
+                      titleAccess="Add Comment"
+                    />
+                    <VisibilityIcon
+                      style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "definition", "view")}
+                      titleAccess="View Comments"
                     />
                   </div>
                 </td>
@@ -1000,8 +1022,14 @@ const saveComment = async () => {
                       onChange={(e) => handleInputChange(row.id, "existingControl", e.target.value)}
                       disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
                     <AddCommentIcon
-                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openCommentPopup(row.id, "existingControl")}
+                      style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "existingControl", "add")}
+                      titleAccess="Add Comment"
+                    />
+                    <VisibilityIcon
+                      style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "existingControl", "view")}
+                      titleAccess="View Comments"
                     />
                   </div>
                 </td>
@@ -1037,8 +1065,14 @@ const saveComment = async () => {
                       onChange={(e) => handleInputChange(row.id, "mitigationPlan", e.target.value)}
                       disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
                     <AddCommentIcon
-                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openCommentPopup(row.id, "mitigationPlan")}
+                      style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "mitigationPlan", "add")}
+                      titleAccess="Add Comment"
+                    />
+                    <VisibilityIcon
+                      style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "mitigationPlan", "view")}
+                      titleAccess="View Comments"
                     />
                   </div>
                 </td>
@@ -1051,8 +1085,14 @@ const saveComment = async () => {
                       onChange={(e) => handleInputChange(row.id, "riskOwner", e.target.value)}
                       disabled={requiredData.role === "admin" || row.submitted && !row.editable}></textarea>
                     <AddCommentIcon
-                      style={{ position: "absolute", top: 2, right: 2, cursor: "pointer", color: "#1976d2" }}
-                      onClick={() => openCommentPopup(row.id, "riskOwner")}
+                      style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "riskOwner", "add")}
+                      titleAccess="Add Comment"
+                    />
+                    <VisibilityIcon
+                      style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                      onClick={() => openCommentPopup(row.id, "riskOwner", "view")}
+                      titleAccess="View Comments"
                     />
                   </div>
                 </td>
@@ -1221,30 +1261,43 @@ const saveComment = async () => {
         {logoutScreen && <SuccessScreen icon={<ExitToAppIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Want To LOGOUT ?"} headingColor={"orangered"} message={"You can simply login again with your credentials"} secondaryMessage={"Thank You"} successButtonText={"Yes, Logout"} cancelText={"Cancel"} onConfirm={handleLogout} onCancel={hideLogoutScreen} />}
 
         <Dialog open={commentPopup.open} onClose={closeCommentPopup} fullWidth maxWidth="sm">
-          <DialogTitle>Add Comments</DialogTitle>
+          <DialogTitle>
+            {commentPopup.mode === "view" ? "View Comments" : "Add Comment"}
+          </DialogTitle>
+
           <DialogContent>
-            {comments[commentPopup.rowId]?.[commentPopup.field]?.length > 0 ? (
-              comments[commentPopup.rowId][commentPopup.field].map((c, i) => (
-                <p key={i}><strong>{c.date}:</strong> {c.text}</p>
-              ))
+            {commentPopup.mode === "view" ? (
+              // SHOW COMMENTS ONLY IN VIEW MODE
+              comments[commentPopup.rowId]?.[commentPopup.field]?.length > 0 ? (
+                comments[commentPopup.rowId][commentPopup.field].map((c, i) => (
+                  <p key={i}><strong>{c.date}:</strong> {c.text}</p>
+                ))
+              ) : (
+                <p>No comments yet.</p>
+              )
             ) : (
-              <p>No comments yet.</p>
+              // SHOW INPUT ONLY IN ADD MODE
+              <TextField
+                fullWidth
+                label="Add Comment"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                multiline
+                rows={3}
+                margin="normal"
+              />
             )}
-            <TextField
-              fullWidth
-              label="Add Comment (optional)"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              multiline
-              rows={3}
-              margin="normal"
-            />
           </DialogContent>
+
           <DialogActions>
-            <Button onClick={closeCommentPopup}>Cancel</Button>
-            <Button onClick={saveComment} variant="contained">Save</Button>
+            <Button onClick={closeCommentPopup}>Close</Button>
+            {commentPopup.mode === "add" && (
+              <Button onClick={saveComment} variant="contained">Save</Button>
+            )}
           </DialogActions>
         </Dialog>
+
+
 
 
       </div>
