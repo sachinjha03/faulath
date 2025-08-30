@@ -49,6 +49,7 @@ export default function Page() {
   const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
+  const [rawData , setRawData] = useState([])
 
   const sanitize = (name) => name.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -134,7 +135,7 @@ export default function Page() {
       });
       const json = await response.json();
       if (!json.success) return console.error(json.message);
-
+      setRawData(json.data)
       const fields = formStructure[requiredData.company?.toLowerCase()]?.[requiredData.module] || [];
       const formattedRows = json.data.map(entry => {
         const dynamicRow = {
@@ -175,48 +176,67 @@ export default function Page() {
     }
     setDisplayLoadingScreen(false);
   };
-  console.log(rows[0]);
 
-  const exportToExcel = () => {
-    if (!baseRows || baseRows.length === 0) return;
 
-    const fields = getFields();
+const exportToExcel = () => {
+  if (!baseRows || baseRows.length === 0) return;
 
-    const exportData = baseRows.map((row, index) => {
-      const rowData = { "S.No": index + 1 };
+  const fields = getFields();
 
-      fields.forEach(field => {
-        const fieldValue = row[field.name];
-        // ✅ If it's an object with { value, comments }, export only the value
-        rowData[field.label] =
-          typeof fieldValue === "object" && fieldValue !== null
-            ? fieldValue.value || ""
-            : fieldValue || "";
-      });
+  const exportData = baseRows.map((row, index) => {
+    const rowData = { "S.No": index + 1 };
 
-      rowData["Status"] = row.currentStatus;
-      rowData["Last Edit"] = row.lastEditedBy
-        ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
-        : "Not Edited Yet";
+    fields.forEach(field => {
+      const fieldValue = row[field.name];
 
-      return rowData;
+      if (typeof fieldValue === "object" && fieldValue !== null) {
+        // ✅ Export value
+        rowData[field.label] = fieldValue.value || "";
+
+        // ✅ Export comments as separate column
+        if (Array.isArray(fieldValue.comments) && fieldValue.comments.length > 0) {
+          rowData[`${field.label} Comments`] = fieldValue.comments
+            .map(
+              c =>
+                `[${c.date}] ${c.text}${c.author ? ` (by ${c.author})` : ""}`
+            )
+            .join("\n"); // newline inside cell
+        } else {
+          rowData[`${field.label} Comments`] = "";
+        }
+      } else {
+        // If it's just a plain value
+        rowData[field.label] = fieldValue || "";
+      }
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "BIA Data");
+    rowData["Status"] = row.currentStatus;
+    rowData["Last Edit"] = row.lastEditedBy
+      ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
+      : "Not Edited Yet";
 
-    worksheet["!cols"] = [
-      { wch: 6 }, // S.No
-      ...fields.map(field => ({ wch: Math.max(field.label.length, 15) })), // Dynamic field widths
-      { wch: 25 }, // Status
-      { wch: 40 } // Last Edit
-    ];
+    return rowData;
+  });
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "BIAData.xlsx");
-  };
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "BIA Data");
+
+  worksheet["!cols"] = [
+    { wch: 6 }, // S.No
+    ...fields.flatMap(field => [
+      { wch: Math.max(field.label.length, 15) }, // Value column
+      { wch: 40 } // Comments column
+    ]),
+    { wch: 25 }, // Status
+    { wch: 40 } // Last Edit
+  ];
+
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+  saveAs(data, "BIAData.xlsx");
+};
+
 
 
   const getFields = () => {
@@ -224,6 +244,8 @@ export default function Page() {
     const module = requiredData.module;
     return formStructure[company]?.[module] || [];
   };
+
+  
 
   const createEmptyRow = () => {
     const fields = getFields();
@@ -579,6 +601,17 @@ export default function Page() {
   const closeCommentPopup = () => {
     setCommentPopup({ open: false, rowId: null, field: null });
   };
+    const formatDateTime = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2); // last 2 digits
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+};
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
 
@@ -591,7 +624,7 @@ export default function Page() {
     const trimmed = commentText.trim();
     const newCommentObj = {
       text: trimmed,
-      date: new Date().toLocaleString(),
+      date: formatDateTime(),
     };
 
     // Update local rows state (for instant UI feedback)
@@ -752,7 +785,6 @@ export default function Page() {
           <tbody>
             {rows.map((row, index) => (
               <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
-                {console.log(row)}
                 <td>{index + 1}</td>
                 {getFields().map(field => (
                   <td key={field.name} className={styles.cellWithIcon}>

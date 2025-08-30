@@ -49,6 +49,7 @@ export default function Page() {
   const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
+  const [rawData , setRawData] = useState([])
 
 
 
@@ -105,7 +106,7 @@ export default function Page() {
       });
 
       const json = await res.json();
-      console.log(json);
+      // console.log(json);
 
       if (json.success && Array.isArray(json.data)) {
         setNotifications(json.data);
@@ -164,9 +165,8 @@ export default function Page() {
         }
       });
       const json = await res.json();
-      console.log(json);
-
       if (json.success && Array.isArray(json.data)) {
+        setRawData(json.data)
         const formattedData = json.data.map((item) => ({
           id: Date.now() + Math.random(),
           dataId: item._id,
@@ -187,7 +187,7 @@ export default function Page() {
           currentStatus: item.currentStatus || "Draft",
           submitted: true,
           editable: false,
-          lastEditedBy: item.lastEditedBy?.value || "Not Edited Yet",
+          lastEditedBy: item.lastEditedBy || "Not Edited Yet",
 
           // keep raw comments for this row
           _comments: {
@@ -257,34 +257,42 @@ export default function Page() {
     setDisplayLoadingScreen(false);
   };
 
+  console.log(rawData);
+  
+const formatComments = (comments = []) =>
+  comments.map(c => `${c.date}: ${c.text}`).join(" | ");
 
-
+// Map rows to a format suitable for Excel
+// .filter(row => row.risks && row.risks.trim() !== "")
   const exportToExcel = () => {
     if (!rows || rows.length === 0) return;
-
-    // Map rows to a format suitable for Excel
-    const exportData = rows
-      // remove rows where risks (or any key field) is empty
-      .filter(row => row.risks && row.risks.trim() !== "")
-      .map((row, index) => ({
+    const exportData = rawData
+      .map((elem, index) => ({
         "S.No": index + 1,
-        "Risks": row.risks,
-        "Definition/Potential Cause": row.definition,
-        "Category": row.category,
-        "Likelihood": row.likelihood,
-        "Impact": row.impact,
-        "Risk Score": row.riskScore,
-        "Existing Control": row.existingControl,
-        "Control %": row.control,
-        "Residual Risk": row.residualRisk,
-        "Mitigation Plan": row.mitigationPlan,
-        "Risk Owner": row.riskOwner,
-        "Actions": row.actions || "",
-        "Status": row.currentStatus,
-        "Last Edit": row.lastEditedBy
-          ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
+        "Risks": elem.risks.value,
+        "Risks Comment" : formatComments(elem.risks.comments),
+        "Definition/Potential Cause": elem.definition.value,
+        "Definition Comment" : elem.definition.comments,
+        "Category": elem.category.value,
+        "Likelihood": elem.likelihood.value,
+        "Impact": elem.impact.value,
+        "Risk Score": elem.riskScore.value,
+        "Existing Control": elem.existingControl.value,
+        "Existing Control Comment" : elem.existingControl.comments,
+        "Control %": elem.control.value,
+        "Residual Risk": elem.residualRisk.value,
+        "Mitigation Plan": elem.mitigationPlan.value,
+        "Mitigation Plan Comment" : elem.mitigationPlan.comments,
+        "Risk Owner": elem.riskOwner.value,
+        "Risk Owner Comment" : elem.riskOwner.comments,
+        "Status": elem.currentStatus,
+        "Last Edit": elem.lastEditedBy
+          ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
           : "Not Edited Yet"
       }));
+
+      console.log(exportData);
+      
 
 
     // Create a worksheet
@@ -295,19 +303,23 @@ export default function Page() {
     // --- Column Widths ---
     worksheet['!cols'] = [
       { wch: 6 },   // S.No
-      { wch: 20 },  // Risks
-      { wch: 30 },  // Definition
+      { wch: 40 },  // Risks
+      { wch: 40 },  // Risks Comment
+      { wch: 40 },  // Definition
+      { wch: 40 },  // Definition Comment
       { wch: 15 },  // Category
       { wch: 12 },  // Likelihood
       { wch: 12 },  // Impact
       { wch: 12 },  // Risk Score
-      { wch: 25 },  // Existing Control
+      { wch: 40 },  // Existing Control
+      { wch: 40 },  // Existing Control Comment
       { wch: 12 },  // Control %
       { wch: 15 },  // Residual Risk
-      { wch: 25 },  // Mitigation Plan
-      { wch: 20 },  // Risk Owner
-      { wch: 15 },  // Actions
-      { wch: 25 },  // Status
+      { wch: 40 },  // Mitigation Plan
+      { wch: 40 },  // Mitigation Plan Comment
+      { wch: 40 },  // Risk Owner
+      { wch: 40 },  // Risk Owner Comment
+      { wch: 35 },  // Status
       { wch: 40 }   // Last Edit
     ];
 
@@ -507,6 +519,8 @@ export default function Page() {
         });
       }
       const json = await response.json();
+      // console.log(json);
+      
       if (json.success) {
         alert(row.dataId ? "Changes Saved Successfully" : "Data Sent for Approval Successfully");
         const newId = json.data?._id || row.dataId;
@@ -737,6 +751,17 @@ export default function Page() {
   const closeCommentPopup = () => {
     setCommentPopup({ open: false, rowId: null, field: null });
   };
+  const formatDateTime = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2); // last 2 digits
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+};
 
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
@@ -749,7 +774,7 @@ export default function Page() {
 
     const newCommentObj = {
       text: commentText.trim(),
-      date: new Date().toLocaleString(),
+      date: formatDateTime()
     };
 
     // Update local state
@@ -790,6 +815,7 @@ export default function Page() {
 
 
 
+// console.log(rows);
 
 
 
