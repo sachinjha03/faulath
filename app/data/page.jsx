@@ -257,7 +257,7 @@ export default function Page() {
     setDisplayLoadingScreen(false);
   };
 
-  console.log(rawData);
+  // console.log(rawData);
   
 const formatComments = (comments = []) =>
   comments.map(c => `${c.date}: ${c.text}`).join(" | ");
@@ -291,7 +291,7 @@ const formatComments = (comments = []) =>
           : "Not Edited Yet"
       }));
 
-      console.log(exportData);
+      // console.log(exportData);
       
 
 
