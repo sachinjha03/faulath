@@ -19,7 +19,9 @@ import AddCommentIcon from "@mui/icons-material/AddComment";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import DownloadBIAData from '../components/DownloadBIAData';
 
 export default function Page() {
   const router = useRouter();
@@ -178,63 +180,72 @@ export default function Page() {
   };
 
 
-const exportToExcel = () => {
+
+const exportToExcel = async () => {
   if (!baseRows || baseRows.length === 0) return;
 
-  const fields = getFields();
+  const fields = getFields(); // dynamic fields from formConfig.js
 
-  const exportData = baseRows.map((row, index) => {
-    const rowData = { "S.No": index + 1 };
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("BIA Data");
+
+  // Build headers dynamically
+  const columns = [
+    { header: "S.No", key: "sno", width: 6 },
+    ...fields.flatMap(field => [
+      { header: field.label, key: field.name, width: Math.max(field.label.length, 20) },
+      { header: `${field.label} Comments`, key: `${field.name}Comments`, width: 40 }
+    ]),
+    { header: "Status", key: "status", width: 25 },
+    { header: "Last Edit", key: "lastEdit", width: 40 }
+  ];
+
+  worksheet.columns = columns;
+
+  // Format comments array
+  const formatComments = (arr) =>
+    (arr || [])
+      .map(
+        (c) =>
+          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+            c.date
+          ).toLocaleTimeString()}] ${c.text}${c.author ? ` (by ${c.author})` : ""}`
+      )
+      .join("\n");
+
+  // Add data rows
+  baseRows.forEach((row, index) => {
+    const rowData = { sno: index + 1 };
 
     fields.forEach(field => {
       const fieldValue = row[field.name];
-
       if (typeof fieldValue === "object" && fieldValue !== null) {
-        // ✅ Export value
-        rowData[field.label] = fieldValue.value || "";
-
-        // ✅ Export comments as separate column
-        if (Array.isArray(fieldValue.comments) && fieldValue.comments.length > 0) {
-          rowData[`${field.label} Comments`] = fieldValue.comments
-            .map(
-              c =>
-                `[${c.date}] ${c.text}${c.author ? ` (by ${c.author})` : ""}`
-            )
-            .join("\n"); // newline inside cell
-        } else {
-          rowData[`${field.label} Comments`] = "";
-        }
+        rowData[field.name] = fieldValue.value || "";
+        rowData[`${field.name}Comments`] = formatComments(fieldValue.comments);
       } else {
-        // If it's just a plain value
-        rowData[field.label] = fieldValue || "";
+        rowData[field.name] = fieldValue || "";
+        rowData[`${field.name}Comments`] = "";
       }
     });
 
-    rowData["Status"] = row.currentStatus;
-    rowData["Last Edit"] = row.lastEditedBy
+    rowData.status = row.currentStatus;
+    rowData.lastEdit = row.lastEditedBy
       ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
       : "Not Edited Yet";
 
-    return rowData;
+    worksheet.addRow(rowData);
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(exportData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "BIA Data");
+  // Apply wrapping style to all cells
+  worksheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.alignment = { wrapText: true, vertical: "top" };
+    });
+  });
 
-  worksheet["!cols"] = [
-    { wch: 6 }, // S.No
-    ...fields.flatMap(field => [
-      { wch: Math.max(field.label.length, 15) }, // Value column
-      { wch: 40 } // Comments column
-    ]),
-    { wch: 25 }, // Status
-    { wch: 40 } // Last Edit
-  ];
-
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(data, "BIAData.xlsx");
+  // Generate file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), "BIAData.xlsx");
 };
 
 
@@ -1091,6 +1102,8 @@ const exportToExcel = () => {
         </Dialog>
 
       </div>
+
+      <DownloadBIAData/>
     </div>
   );
 }

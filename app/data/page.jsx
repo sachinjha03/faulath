@@ -18,7 +18,9 @@ import AddCommentIcon from "@mui/icons-material/AddComment";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import DownloadRAData from '../components/DownloadRAData';
 
 
 
@@ -264,72 +266,156 @@ const formatComments = (comments = []) =>
 
 // Map rows to a format suitable for Excel
 // .filter(row => row.risks && row.risks.trim() !== "")
-  const exportToExcel = () => {
-    if (!rows || rows.length === 0) return;
-    const exportData = rawData
-      .map((elem, index) => ({
-        "S.No": index + 1,
-        "Risks": elem.risks.value,
-        "Risks Comment" : formatComments(elem.risks.comments),
-        "Definition/Potential Cause": elem.definition.value,
-        "Definition Comment" : elem.definition.comments,
-        "Category": elem.category.value,
-        "Likelihood": elem.likelihood.value,
-        "Impact": elem.impact.value,
-        "Risk Score": elem.riskScore.value,
-        "Existing Control": elem.existingControl.value,
-        "Existing Control Comment" : elem.existingControl.comments,
-        "Control %": elem.control.value,
-        "Residual Risk": elem.residualRisk.value,
-        "Mitigation Plan": elem.mitigationPlan.value,
-        "Mitigation Plan Comment" : elem.mitigationPlan.comments,
-        "Risk Owner": elem.riskOwner.value,
-        "Risk Owner Comment" : elem.riskOwner.comments,
-        "Status": elem.currentStatus,
-        "Last Edit": elem.lastEditedBy
-          ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
-          : "Not Edited Yet"
-      }));
+  // const exportToExcel = () => {
+  //   if (!rows || rows.length === 0) return;
+  //   const exportData = rawData
+  //     .map((elem, index) => ({
+  //       "S.No": index + 1,
+  //       "Risks": elem.risks.value,
+  //       "Risks Comment" : formatComments(elem.risks.comments),
+  //       "Definition/Potential Cause": elem.definition.value,
+  //       "Definition Comment" : elem.definition.comments,
+  //       "Category": elem.category.value,
+  //       "Likelihood": elem.likelihood.value,
+  //       "Impact": elem.impact.value,
+  //       "Risk Score": elem.riskScore.value,
+  //       "Existing Control": elem.existingControl.value,
+  //       "Existing Control Comment" : elem.existingControl.comments,
+  //       "Control %": elem.control.value,
+  //       "Residual Risk": elem.residualRisk.value,
+  //       "Mitigation Plan": elem.mitigationPlan.value,
+  //       "Mitigation Plan Comment" : elem.mitigationPlan.comments,
+  //       "Risk Owner": elem.riskOwner.value,
+  //       "Risk Owner Comment" : elem.riskOwner.comments,
+  //       "Status": elem.currentStatus,
+  //       "Last Edit": elem.lastEditedBy
+  //         ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
+  //         : "Not Edited Yet"
+  //     }));
 
-      // console.log(exportData);
+  //     // console.log(exportData);
       
 
 
-    // Create a worksheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Risk Data");
+  //   // Create a worksheet
+  //   const worksheet = XLSX.utils.json_to_sheet(exportData);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Risk Data");
 
-    // --- Column Widths ---
-    worksheet['!cols'] = [
-      { wch: 6 },   // S.No
-      { wch: 40 },  // Risks
-      { wch: 40 },  // Risks Comment
-      { wch: 40 },  // Definition
-      { wch: 40 },  // Definition Comment
-      { wch: 15 },  // Category
-      { wch: 12 },  // Likelihood
-      { wch: 12 },  // Impact
-      { wch: 12 },  // Risk Score
-      { wch: 40 },  // Existing Control
-      { wch: 40 },  // Existing Control Comment
-      { wch: 12 },  // Control %
-      { wch: 15 },  // Residual Risk
-      { wch: 40 },  // Mitigation Plan
-      { wch: 40 },  // Mitigation Plan Comment
-      { wch: 40 },  // Risk Owner
-      { wch: 40 },  // Risk Owner Comment
-      { wch: 35 },  // Status
-      { wch: 40 }   // Last Edit
-    ];
+  //   // --- Column Widths ---
+  //   worksheet['!cols'] = [
+  //     { wch: 6 },   // S.No
+  //     { wch: 40 },  // Risks
+  //     { wch: 40 },  // Risks Comment
+  //     { wch: 40 },  // Definition
+  //     { wch: 40 },  // Definition Comment
+  //     { wch: 15 },  // Category
+  //     { wch: 12 },  // Likelihood
+  //     { wch: 12 },  // Impact
+  //     { wch: 12 },  // Risk Score
+  //     { wch: 40 },  // Existing Control
+  //     { wch: 40 },  // Existing Control Comment
+  //     { wch: 12 },  // Control %
+  //     { wch: 15 },  // Residual Risk
+  //     { wch: 40 },  // Mitigation Plan
+  //     { wch: 40 },  // Mitigation Plan Comment
+  //     { wch: 40 },  // Risk Owner
+  //     { wch: 40 },  // Risk Owner Comment
+  //     { wch: 35 },  // Status
+  //     { wch: 40 }   // Last Edit
+  //   ];
+
+  //   Object.keys(worksheet).forEach((cell) => {
+  //   if (cell[0] === "!") return; // skip meta keys
+  //   if (!worksheet[cell].s) worksheet[cell].s = {};
+  //   worksheet[cell].s.alignment = { wrapText: true, vertical: "top" };
+  // });
+
+  //   // Write workbook and save
+  //   const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  //   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+  //   saveAs(data, "RiskData.xlsx");
+  // };
 
 
-    // Write workbook and save
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "RiskData.xlsx");
-  };
+  const exportToExcel = async () => {
+  if (!rows || rows.length === 0) return;
 
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Risk Data");
+
+  // Define headers
+  worksheet.columns = [
+    { header: "S.No", key: "sno", width: 6 },
+    { header: "Risks", key: "risks", width: 40 },
+    { header: "Risks Comment", key: "risksComments", width: 40 },
+    { header: "Definition/Potential Cause", key: "definition", width: 40 },
+    { header: "Definition Comment", key: "definitionComments", width: 40 },
+    { header: "Category", key: "category", width: 15 },
+    { header: "Likelihood", key: "likelihood", width: 12 },
+    { header: "Impact", key: "impact", width: 12 },
+    { header: "Risk Score", key: "riskScore", width: 12 },
+    { header: "Existing Control", key: "existingControl", width: 40 },
+    { header: "Existing Control Comment", key: "existingControlComments", width: 40 },
+    { header: "Control %", key: "control", width: 12 },
+    { header: "Residual Risk", key: "residualRisk", width: 15 },
+    { header: "Mitigation Plan", key: "mitigationPlan", width: 40 },
+    { header: "Mitigation Plan Comment", key: "mitigationPlanComments", width: 40 },
+    { header: "Risk Owner", key: "riskOwner", width: 40 },
+    { header: "Risk Owner Comment", key: "riskOwnerComments", width: 40 },
+    { header: "Status", key: "status", width: 35 },
+    { header: "Last Edit", key: "lastEdit", width: 40 },
+  ];
+
+  // Function to format comments array
+  const formatComments = (arr) =>
+    (arr || [])
+      .map(
+        (c) =>
+          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+            c.date
+          ).toLocaleTimeString()}] ${c.text}`
+      )
+      .join("\n");
+
+  // Add rows
+  rawData.forEach((elem, index) => {
+    worksheet.addRow({
+      sno: index + 1,
+      risks: elem.risks.value,
+      risksComments: formatComments(elem.risks.comments),
+      definition: elem.definition.value,
+      definitionComments: formatComments(elem.definition.comments),
+      category: elem.category.value,
+      likelihood: elem.likelihood.value,
+      impact: elem.impact.value,
+      riskScore: elem.riskScore.value,
+      existingControl: elem.existingControl.value,
+      existingControlComments: formatComments(elem.existingControl.comments),
+      control: elem.control.value,
+      residualRisk: elem.residualRisk.value,
+      mitigationPlan: elem.mitigationPlan.value,
+      mitigationPlanComments: formatComments(elem.mitigationPlan.comments),
+      riskOwner: elem.riskOwner.value,
+      riskOwnerComments: formatComments(elem.riskOwner.comments),
+      status: elem.currentStatus,
+      lastEdit: elem.lastEditedBy
+        ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
+        : "Not Edited Yet",
+    });
+  });
+
+  // Apply wrapping style to all cells
+  worksheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.alignment = { wrapText: true, vertical: "top" };
+    });
+  });
+
+  // Generate Excel file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), "RiskData.xlsx");
+};
 
 
 
@@ -1269,6 +1355,8 @@ const formatComments = (comments = []) =>
         </table>
 
 
+
+
         {successScreen && <SuccessScreen icon={<WarningIcon style={{ fontSize: 50, color: "orangered" }} />} heading={"Do You Really Want To Delete This Data?"} headingColor={"orangered"} message={"This operation is irreversible. Deleting will remove the data permanently."} successButtonColor={"orangered"} successButtonText={"Yes, Delete It"} cancelText={"Cancel"} onConfirm={deleteRow} onCancel={hideSuccessScreen} />}
 
 
@@ -1327,6 +1415,8 @@ const formatComments = (comments = []) =>
 
 
       </div>
+          <DownloadRAData/>
+
     </div>
   );
 }
