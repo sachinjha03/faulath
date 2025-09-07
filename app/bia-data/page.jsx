@@ -51,7 +51,7 @@ export default function Page() {
   const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
-  const [rawData , setRawData] = useState([])
+  const [rawData, setRawData] = useState([])
 
   const sanitize = (name) => name.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -181,72 +181,72 @@ export default function Page() {
 
 
 
-const exportToExcel = async () => {
-  if (!baseRows || baseRows.length === 0) return;
+  const exportToExcel = async () => {
+    if (!baseRows || baseRows.length === 0) return;
 
-  const fields = getFields(); // dynamic fields from formConfig.js
+    const fields = getFields(); // dynamic fields from formConfig.js
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("BIA Data");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("BIA Data");
 
-  // Build headers dynamically
-  const columns = [
-    { header: "S.No", key: "sno", width: 6 },
-    ...fields.flatMap(field => [
-      { header: field.label, key: field.name, width: Math.max(field.label.length, 20) },
-      { header: `${field.label} Comments`, key: `${field.name}Comments`, width: 40 }
-    ]),
-    { header: "Status", key: "status", width: 25 },
-    { header: "Last Edit", key: "lastEdit", width: 40 }
-  ];
+    // Build headers dynamically
+    const columns = [
+      { header: "S.No", key: "sno", width: 6 },
+      ...fields.flatMap(field => [
+        { header: field.label, key: field.name, width: Math.max(field.label.length, 20) },
+        { header: `${field.label} Comments`, key: `${field.name}Comments`, width: 40 }
+      ]),
+      { header: "Status", key: "status", width: 25 },
+      { header: "Last Edit", key: "lastEdit", width: 40 }
+    ];
 
-  worksheet.columns = columns;
+    worksheet.columns = columns;
 
-  // Format comments array
-  const formatComments = (arr) =>
-    (arr || [])
-      .map(
-        (c) =>
-          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
-            c.date
-          ).toLocaleTimeString()}] ${c.text}${c.author ? ` (by ${c.author})` : ""}`
-      )
-      .join("\n");
+    // Format comments array
+    const formatComments = (arr) =>
+      (arr || [])
+        .map(
+          (c) =>
+            `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+              c.date
+            ).toLocaleTimeString()}] ${c.text}${c.author ? ` (by ${c.author})` : ""}`
+        )
+        .join("\n");
 
-  // Add data rows
-  baseRows.forEach((row, index) => {
-    const rowData = { sno: index + 1 };
+    // Add data rows
+    baseRows.forEach((row, index) => {
+      const rowData = { sno: index + 1 };
 
-    fields.forEach(field => {
-      const fieldValue = row[field.name];
-      if (typeof fieldValue === "object" && fieldValue !== null) {
-        rowData[field.name] = fieldValue.value || "";
-        rowData[`${field.name}Comments`] = formatComments(fieldValue.comments);
-      } else {
-        rowData[field.name] = fieldValue || "";
-        rowData[`${field.name}Comments`] = "";
-      }
+      fields.forEach(field => {
+        const fieldValue = row[field.name];
+        if (typeof fieldValue === "object" && fieldValue !== null) {
+          rowData[field.name] = fieldValue.value || "";
+          rowData[`${field.name}Comments`] = formatComments(fieldValue.comments);
+        } else {
+          rowData[field.name] = fieldValue || "";
+          rowData[`${field.name}Comments`] = "";
+        }
+      });
+
+      rowData.status = row.currentStatus;
+      rowData.lastEdit = row.lastEditedBy
+        ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
+        : "Not Edited Yet";
+
+      worksheet.addRow(rowData);
     });
 
-    rowData.status = row.currentStatus;
-    rowData.lastEdit = row.lastEditedBy
-      ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
-      : "Not Edited Yet";
-
-    worksheet.addRow(rowData);
-  });
-
-  // Apply wrapping style to all cells
-  worksheet.eachRow((row) => {
-    row.eachCell((cell) => {
-      cell.alignment = { wrapText: true, vertical: "top" };
+    // Apply wrapping style to all cells
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.alignment = { wrapText: true, vertical: "top" };
+      });
     });
-  });
 
-  // Generate file
-  const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(new Blob([buffer]), "BIAData.xlsx");
-};
+    // Generate file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "BIAData.xlsx");
+  };
 
 
 
@@ -256,7 +256,7 @@ const exportToExcel = async () => {
     return formStructure[company]?.[module] || [];
   };
 
-  
+
 
   const createEmptyRow = () => {
     const fields = getFields();
@@ -292,45 +292,62 @@ const exportToExcel = async () => {
     );
   };
 
+const handleSubmit = async (row) => {
+  const fields = getFields();
+  const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
+  if (isEmpty) return alert("Please fill all fields before submitting.");
 
-  const handleSubmit = async (row) => {
-    const fields = getFields();
-    const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
-    if (isEmpty) return alert("Please fill all fields before submitting.");
+  const token = localStorage.getItem("auth-token");
 
-    const token = localStorage.getItem("auth-token");
+  // Flatten form data before sending
+  const formData = {};
+  fields.forEach(f => {
+    const fieldData = row[f.name] || {};
+    let value = fieldData.value;
 
-    // Flatten all values just before sending to backend
-    const formData = {};
-    fields.forEach(f => {
-      const fieldData = row[f.name] || {};
-      let value = fieldData.value;
+    if (value && typeof value === "object" && "value" in value) {
+      value = value.value; // flatten nested values
+    }
 
-      // If somehow value is nested, flatten it
-      if (value && typeof value === "object" && "value" in value) {
-        value = value.value;
-      }
-
-      formData[sanitize(f.name)] = {
-        value: value || "",
-        comments: fieldData.comments || []
-      };
-    });
-
-    const payload = {
-      company: requiredData.company,
-      department: requiredData.department,
-      module: requiredData.module,
-      createdBy: requiredData.email,
-      userId: requiredData.userId,
-      formData
+    formData[sanitize(f.name)] = {
+      value: value || "",
+      comments: fieldData.comments || []
     };
+  });
 
-    try {
-      setLoading(true);
-      if (row.dataId) {
-        setEditButton("Saving...");
-        const res = await fetch(`${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`, {
+  // --- Status logic ---
+  let statusForSubmit;
+  const isSuperAdmin = requiredData.role === "super admin";
+
+  if (!row.dataId && isSuperAdmin) {
+    // ✅ New record created by Super Admin
+    statusForSubmit = "Data Created By Super Admin";
+  } else if (!row.dataId) {
+    // ✅ New record created by normal user
+    statusForSubmit = "Pending for Owner Approval";
+  } else {
+    // ✅ Editing existing record
+    statusForSubmit = row.currentStatus; // keep whatever status it already had
+  }
+
+  const payload = {
+    company: requiredData.company,
+    department: requiredData.department,
+    module: requiredData.module,
+    createdBy: requiredData.email,
+    userId: requiredData.userId,
+    formData
+  };
+
+  try {
+    setLoading(true);
+
+    if (row.dataId) {
+      // --- UPDATE ---
+      setEditButton("Saving...");
+      const res = await fetch(
+        `${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`,
+        {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -338,68 +355,80 @@ const exportToExcel = async () => {
           },
           body: JSON.stringify({
             ...payload,
-            currentStatus: "Pending for Owner Approval",
+            currentStatus: statusForSubmit,
             lastEditedBy: { email: requiredData.email }
           })
-        });
-        const json = await res.json();
-        if (json.success) {
-          alert("Changes Saved Successfully!");
-          setRows(prev =>
-            prev.map(r =>
-              r.id === row.id
-                ? {
+        }
+      );
+      const json = await res.json();
+      if (json.success) {
+        alert("Changes Saved Successfully!");
+        setRows(prev =>
+          prev.map(r =>
+            r.id === row.id
+              ? {
                   ...r,
                   editable: false,
-                  currentStatus: "Pending for Owner Approval",
+                  currentStatus: statusForSubmit,
                   dataId: json.data._id
                 }
-                : r
-            )
-          );
-        } else {
-          alert("Update failed.");
-        }
+              : r
+          )
+        );
       } else {
-        setSendButton("Sending...");
-        const res = await fetch(`${MyContextApi.backendURL}/api/add-business-impact-analysis-data`, {
+        alert("Update failed.");
+      }
+    } else {
+      // --- CREATE ---
+      setSendButton("Sending...");
+      const res = await fetch(
+        `${MyContextApi.backendURL}/api/add-business-impact-analysis-data`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          alert("Data sent to owner successfully!");
-          const updatedRows = rows.map(r =>
-            r.id === row.id
-              ? {
+          body: JSON.stringify({
+            ...payload,
+            currentStatus: statusForSubmit
+          })
+        }
+      );
+      const json = await res.json();
+      if (json.success) {
+        alert(
+          isSuperAdmin
+            ? "Data created successfully by Super Admin!"
+            : "Data sent to Owner successfully!"
+        );
+        const updatedRows = rows.map(r =>
+          r.id === row.id
+            ? {
                 ...r,
                 submitted: true,
                 editable: false,
-                currentStatus: "Pending for Owner Approval",
-                _id: json.data._id,
+                currentStatus: statusForSubmit,
                 dataId: json.data._id
               }
-              : r
-          );
-          updatedRows.push(createEmptyRow());
-          setRows(updatedRows);
-        } else {
-          alert("Submission failed. Please try again.");
-        }
+            : r
+        );
+        updatedRows.push(createEmptyRow());
+        setRows(updatedRows);
+      } else {
+        alert("Submission failed. Please try again.");
       }
-    } catch (error) {
-      console.error("Submit Error:", error);
-      alert("An error occurred while submitting the data.");
-    } finally {
-      setSendButton("Send To Owner");
-      setEditButton("Save Changes");
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Submit Error:", error);
+    alert("An error occurred while submitting the data.");
+  } finally {
+    setSendButton("Send To Owner");
+    setEditButton("Save Changes");
+    setLoading(false);
+  }
+};
+
 
 
 
@@ -544,6 +573,7 @@ const exportToExcel = async () => {
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
+    if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
 
@@ -612,17 +642,17 @@ const exportToExcel = async () => {
   const closeCommentPopup = () => {
     setCommentPopup({ open: false, rowId: null, field: null });
   };
-    const formatDateTime = () => {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = String(now.getFullYear()).slice(-2); // last 2 digits
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
+  const formatDateTime = () => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = String(now.getFullYear()).slice(-2); // last 2 digits
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
 
-  return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
-};
+    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+  };
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
 
@@ -929,6 +959,24 @@ const exportToExcel = async () => {
                       <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                     </>
                   )}
+                  {/* If created by Super Admin → only Edit + Delete */}
+                  {requiredData.role === "super admin" &&
+                    row.currentStatus === "Data Created By Super Admin" && (
+                      <>
+                        {/* <button
+                          className={`btn-a ${styles.editBtn}`}
+                          onClick={() => enableEdit(row.id)}
+                        >
+                          {editButton[row.id] || "Edit"}
+                        </button> */}
+                        <button
+                          className={`btn-a ${styles.failBtn}`}
+                          onClick={() => displaySuccessScreen(row.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                 </td>
                 <td className={styles.currentStatusTD}>
                   <div style={{ minWidth: '200px' }}>
@@ -1103,7 +1151,7 @@ const exportToExcel = async () => {
 
       </div>
 
-      <DownloadBIAData/>
+      <DownloadBIAData />
     </div>
   );
 }

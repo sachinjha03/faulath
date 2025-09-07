@@ -51,7 +51,7 @@ export default function Page() {
   const [commentPopup, setCommentPopup] = useState({ open: false, rowId: null, field: null });
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
-  const [rawData , setRawData] = useState([])
+  const [rawData, setRawData] = useState([])
 
 
 
@@ -260,12 +260,12 @@ export default function Page() {
   };
 
   // console.log(rawData);
-  
-const formatComments = (comments = []) =>
-  comments.map(c => `${c.date}: ${c.text}`).join(" | ");
 
-// Map rows to a format suitable for Excel
-// .filter(row => row.risks && row.risks.trim() !== "")
+  const formatComments = (comments = []) =>
+    comments.map(c => `${c.date}: ${c.text}`).join(" | ");
+
+  // Map rows to a format suitable for Excel
+  // .filter(row => row.risks && row.risks.trim() !== "")
   // const exportToExcel = () => {
   //   if (!rows || rows.length === 0) return;
   //   const exportData = rawData
@@ -294,7 +294,7 @@ const formatComments = (comments = []) =>
   //     }));
 
   //     // console.log(exportData);
-      
+
 
 
   //   // Create a worksheet
@@ -339,83 +339,83 @@ const formatComments = (comments = []) =>
 
 
   const exportToExcel = async () => {
-  if (!rows || rows.length === 0) return;
+    if (!rows || rows.length === 0) return;
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Risk Data");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Risk Data");
 
-  // Define headers
-  worksheet.columns = [
-    { header: "S.No", key: "sno", width: 6 },
-    { header: "Risks", key: "risks", width: 40 },
-    { header: "Risks Comment", key: "risksComments", width: 40 },
-    { header: "Definition/Potential Cause", key: "definition", width: 40 },
-    { header: "Definition Comment", key: "definitionComments", width: 40 },
-    { header: "Category", key: "category", width: 15 },
-    { header: "Likelihood", key: "likelihood", width: 12 },
-    { header: "Impact", key: "impact", width: 12 },
-    { header: "Risk Score", key: "riskScore", width: 12 },
-    { header: "Existing Control", key: "existingControl", width: 40 },
-    { header: "Existing Control Comment", key: "existingControlComments", width: 40 },
-    { header: "Control %", key: "control", width: 12 },
-    { header: "Residual Risk", key: "residualRisk", width: 15 },
-    { header: "Mitigation Plan", key: "mitigationPlan", width: 40 },
-    { header: "Mitigation Plan Comment", key: "mitigationPlanComments", width: 40 },
-    { header: "Risk Owner", key: "riskOwner", width: 40 },
-    { header: "Risk Owner Comment", key: "riskOwnerComments", width: 40 },
-    { header: "Status", key: "status", width: 35 },
-    { header: "Last Edit", key: "lastEdit", width: 40 },
-  ];
+    // Define headers
+    worksheet.columns = [
+      { header: "S.No", key: "sno", width: 6 },
+      { header: "Risks", key: "risks", width: 40 },
+      { header: "Risks Comment", key: "risksComments", width: 40 },
+      { header: "Definition/Potential Cause", key: "definition", width: 40 },
+      { header: "Definition Comment", key: "definitionComments", width: 40 },
+      { header: "Category", key: "category", width: 15 },
+      { header: "Likelihood", key: "likelihood", width: 12 },
+      { header: "Impact", key: "impact", width: 12 },
+      { header: "Risk Score", key: "riskScore", width: 12 },
+      { header: "Existing Control", key: "existingControl", width: 40 },
+      { header: "Existing Control Comment", key: "existingControlComments", width: 40 },
+      { header: "Control %", key: "control", width: 12 },
+      { header: "Residual Risk", key: "residualRisk", width: 15 },
+      { header: "Mitigation Plan", key: "mitigationPlan", width: 40 },
+      { header: "Mitigation Plan Comment", key: "mitigationPlanComments", width: 40 },
+      { header: "Risk Owner", key: "riskOwner", width: 40 },
+      { header: "Risk Owner Comment", key: "riskOwnerComments", width: 40 },
+      { header: "Status", key: "status", width: 35 },
+      { header: "Last Edit", key: "lastEdit", width: 40 },
+    ];
 
-  // Function to format comments array
-  const formatComments = (arr) =>
-    (arr || [])
-      .map(
-        (c) =>
-          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
-            c.date
-          ).toLocaleTimeString()}] ${c.text}`
-      )
-      .join("\n");
+    // Function to format comments array
+    const formatComments = (arr) =>
+      (arr || [])
+        .map(
+          (c) =>
+            `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+              c.date
+            ).toLocaleTimeString()}] ${c.text}`
+        )
+        .join("\n");
 
-  // Add rows
-  rawData.forEach((elem, index) => {
-    worksheet.addRow({
-      sno: index + 1,
-      risks: elem.risks.value,
-      risksComments: formatComments(elem.risks.comments),
-      definition: elem.definition.value,
-      definitionComments: formatComments(elem.definition.comments),
-      category: elem.category.value,
-      likelihood: elem.likelihood.value,
-      impact: elem.impact.value,
-      riskScore: elem.riskScore.value,
-      existingControl: elem.existingControl.value,
-      existingControlComments: formatComments(elem.existingControl.comments),
-      control: elem.control.value,
-      residualRisk: elem.residualRisk.value,
-      mitigationPlan: elem.mitigationPlan.value,
-      mitigationPlanComments: formatComments(elem.mitigationPlan.comments),
-      riskOwner: elem.riskOwner.value,
-      riskOwnerComments: formatComments(elem.riskOwner.comments),
-      status: elem.currentStatus,
-      lastEdit: elem.lastEditedBy
-        ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
-        : "Not Edited Yet",
+    // Add rows
+    rawData.forEach((elem, index) => {
+      worksheet.addRow({
+        sno: index + 1,
+        risks: elem.risks.value,
+        risksComments: formatComments(elem.risks.comments),
+        definition: elem.definition.value,
+        definitionComments: formatComments(elem.definition.comments),
+        category: elem.category.value,
+        likelihood: elem.likelihood.value,
+        impact: elem.impact.value,
+        riskScore: elem.riskScore.value,
+        existingControl: elem.existingControl.value,
+        existingControlComments: formatComments(elem.existingControl.comments),
+        control: elem.control.value,
+        residualRisk: elem.residualRisk.value,
+        mitigationPlan: elem.mitigationPlan.value,
+        mitigationPlanComments: formatComments(elem.mitigationPlan.comments),
+        riskOwner: elem.riskOwner.value,
+        riskOwnerComments: formatComments(elem.riskOwner.comments),
+        status: elem.currentStatus,
+        lastEdit: elem.lastEditedBy
+          ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
+          : "Not Edited Yet",
+      });
     });
-  });
 
-  // Apply wrapping style to all cells
-  worksheet.eachRow((row) => {
-    row.eachCell((cell) => {
-      cell.alignment = { wrapText: true, vertical: "top" };
+    // Apply wrapping style to all cells
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.alignment = { wrapText: true, vertical: "top" };
+      });
     });
-  });
 
-  // Generate Excel file
-  const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(new Blob([buffer]), "RiskData.xlsx");
-};
+    // Generate Excel file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "RiskData.xlsx");
+  };
 
 
 
@@ -423,13 +423,13 @@ const formatComments = (comments = []) =>
   // CHANGE THE COLOR OR ROW BASED UPON THEIR CURRENT STATUS
   const getRowStatusClass = (status = "") => {
     const normalized = status.toLowerCase();
-
     if (normalized === "draft") return styles.rowDraft;
     if (normalized === "pending for owner approval") return styles.rowPending;
     if (normalized.startsWith("approved by owner")) return styles.rowApprovedOwner;
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
+    if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
 
@@ -564,7 +564,9 @@ const formatComments = (comments = []) =>
       riskOwner: row.riskOwner,
       approvedBy: "",
       finalApprovedBy: "",
-      currentStatus: "Pending for Owner Approval",
+      currentStatus: requiredData.role === "super admin"
+        ? "Data Created By Super Admin"   // 👈 Directly approved
+        : "Pending for Owner Approval",      // 👈 Default flow for others
       company: requiredData.company,
       ...(row.dataId
         ? {
@@ -578,6 +580,7 @@ const formatComments = (comments = []) =>
           lastEditedBy: null
         })
     };
+
 
     setLoading(true)
     try {
@@ -606,7 +609,7 @@ const formatComments = (comments = []) =>
       }
       const json = await response.json();
       // console.log(json);
-      
+
       if (json.success) {
         alert(row.dataId ? "Changes Saved Successfully" : "Data Sent for Approval Successfully");
         const newId = json.data?._id || row.dataId;
@@ -838,16 +841,25 @@ const formatComments = (comments = []) =>
     setCommentPopup({ open: false, rowId: null, field: null });
   };
   const formatDateTime = () => {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = String(now.getFullYear()).slice(-2); // last 2 digits
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = String(now.getFullYear()).slice(-2); // last 2 digits
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
 
-  return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
-};
+    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+  };
+
+  function getFormattedDate() {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, "0");
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const yy = String(today.getFullYear()).slice(-2);
+
+    return `${dd}/${mm}/${yy}`;
+  }
 
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
@@ -901,7 +913,7 @@ const formatComments = (comments = []) =>
 
 
 
-// console.log(rows);
+  // console.log(rows);
 
 
 
@@ -927,7 +939,7 @@ const formatComments = (comments = []) =>
                 <div className={styles.myNotificationCircle}>
                   <NotificationImportantIcon className={styles.notificationIcon} />
                 </div>
-                <p className={styles.notificationMessage}>{elem.message}</p>
+                <p className={styles.notificationMessage}>{elem.message} [{elem.createdAtFormatted}]</p>
                 <DeleteIcon
                   className={styles.notificationCloseIcon}
                   onClick={() => deleteNotification(elem._id)}
@@ -956,7 +968,7 @@ const formatComments = (comments = []) =>
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              <button className={`btn-a ${styles.filterBtn}`}>Ledger</button>
+              <button className={`btn-a flex-btn ${styles.filterBtn}`}>Backup Till {getFormattedDate()}</button>
               <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
             </div>
           </div>
@@ -1095,7 +1107,7 @@ const formatComments = (comments = []) =>
                 </td>
 
                 {/* Likelihood */}
-                <td style={{ backgroundColor: colorMap[row.likelihood] || "transparent" }} >
+                <td style={{ backgroundColor: colorMap[row.likelihood] || "transparent", position: "relative" }} className={styles.dropDownOption} >
                   <select
                     className="input-field"
                     value={row.likelihood}
@@ -1104,10 +1116,28 @@ const formatComments = (comments = []) =>
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
+                  <div className={styles.ledger}>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "red" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "green" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "cornflowerblue" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                  </div>
                 </td>
 
                 {/* Impact */}
-                <td style={{ backgroundColor: colorMap[row.impact] || "transparent" }}>
+                <td style={{ backgroundColor: colorMap[row.impact] || "transparent", position: "relative" }} className={styles.dropDownOption}>
                   <select
                     className="input-field"
                     value={row.impact}
@@ -1116,14 +1146,50 @@ const formatComments = (comments = []) =>
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
+                  <div className={styles.ledger}>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                  </div>
                 </td>
 
                 {/* Risk Score */}
-                <td style={{ backgroundColor: row.riskScore >= 1 && row.riskScore <= 2 ? "#59bd59ff" : row.riskScore >= 3 && row.riskScore <= 9 ? "#FFFF00" : "#FF0000" }}>
+                <td style={{ backgroundColor: row.riskScore >= 1 && row.riskScore <= 2 ? "#59bd59ff" : row.riskScore >= 3 && row.riskScore <= 9 ? "#FFFF00" : "#FF0000", position: "relative" }} className={styles.dropDownOption}>
                   <input
                     type="number"
                     className="input-field"
                     value={row.riskScore} disabled />
+                  <div className={styles.ledger}>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                  </div>
                 </td>
 
                 {/* Existing Control */}
@@ -1148,14 +1214,43 @@ const formatComments = (comments = []) =>
 
 
                 {/* Control */}
-                <td style={{ backgroundColor: row.control >= 0 && row.control <= 24 ? "#FF0000" : row.control >= 25 && row.control <= 49 ? "#ffae00ff" : row.control >= 50 && row.control <= 74 ? "#FFFF00" : "#59bd59ff" }}>
-                  <input
+                <td style={{ backgroundColor: row.control >= 0 && row.control <= 24 ? "#FF0000" : row.control >= 25 && row.control <= 49 ? "#ffae00ff" : row.control >= 50 && row.control <= 74 ? "#FFFF00" : "#59bd59ff", position: "relative" }} className={styles.dropDownOption}>
+                  {/* <input
                     type="number"
                     className="input-field"
                     value={row.control}
                     onChange={(e) => handleInputChange(row.id, "control", e.target.value)}
                     disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  />
+                  /> */}
+                  <select
+                    className="input-field"
+                    value={row.control}
+                    onChange={(e) => handleInputChange(row.id, "control", e.target.value)}
+                    disabled={requiredData.role === "admin" || (row.submitted && !row.editable)}
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={75}>75</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <div className={styles.ledger}>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                  </div>
                 </td>
 
                 {/* Residual Risk */}
@@ -1320,6 +1415,25 @@ const formatComments = (comments = []) =>
                       <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                     </>
                   )}
+                  {/* If created by Super Admin → only Edit + Delete */}
+                  {requiredData.role === "super admin" &&
+                    row.currentStatus === "Data Created By Super Admin" && (
+                      <>
+                        {/* <button
+                          className={`btn-a ${styles.editBtn}`}
+                          onClick={() => enableEdit(row.id)}
+                        >
+                          {editButton[row.id] || "Edit"}
+                        </button> */}
+                        <button
+                          className={`btn-a ${styles.failBtn}`}
+                          onClick={() => displaySuccessScreen(row.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+
                 </td>
 
                 {/* <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button> */}
@@ -1415,7 +1529,7 @@ const formatComments = (comments = []) =>
 
 
       </div>
-          <DownloadRAData/>
+      <DownloadRAData />
 
     </div>
   );

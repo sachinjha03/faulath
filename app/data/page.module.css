@@ -401,6 +401,9 @@
 .rowRejectedAdmin {
   background-color: #f59f9f; /* light red/pink */
 }
+.rowCreatedBySuperAdmin{
+  background-color: #d9c7fc; /* light purple */
+}
 
 .loadingScreen {
   position: absolute;
@@ -428,6 +431,35 @@
   flex-direction: column;
 }
 
+.ledger{
+  position: absolute;
+  top: -20%;
+  left: 80%;
+  padding: 1rem 1rem;
+  font-size: 10px;
+  background-color: white;
+  width: 200px;
+  min-height: 100px;
+  cursor: pointer;
+  display: none;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 999;
+  border-radius: 8px;
+}
+.ledgerInfo{
+  display: flex;
+  gap: 0.5rem;
+}
+.ledgerColor{
+  width: 12px;
+  height: 12px;
+  background-color: #93db9d;
+  border-radius: 50px;
+}
+.dropDownOption:hover > .ledger{
+  display: flex;
+}
 
 @media screen and (max-width:600px) {
   /* .dataPageTop{
