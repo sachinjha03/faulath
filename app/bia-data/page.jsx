@@ -573,7 +573,7 @@ const handleSubmit = async (row) => {
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
-    if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
+    // if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
 
@@ -768,7 +768,7 @@ const handleSubmit = async (row) => {
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              <button className={`btn-a ${styles.filterBtn}`}>Ledger</button>
+              {/* <button className={`btn-a ${styles.filterBtn}`}>Ledger</button> */}
               <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
             </div>
           </div>

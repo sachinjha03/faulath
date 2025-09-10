@@ -39,7 +39,7 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [baseRows, setBaseRows] = useState([]);
-  const [rows, setRows] = useState([{ id: Date.now(), risks: '', definition: '', category: 'operational', likelihood: '3', impact: '4', riskScore: 12, existingControl: '', control: 50, residualRisk: 5, mitigationPlan: '', riskOwner: '', currentStatus: "Draft", submitted: false, editable: true, lastEditedBy: 'Not Edited Yet' }]);
+  const [rows, setRows] = useState([{ id: Date.now(), risks: '', definition: '', category: 'operational', likelihood: '3', impact: '4', riskScore: 12, existingControl: '', controlEffectiveness: "Strong", control: 75, residualRisk: 3, treatmentOption: "Treat", mitigationPlan: '', riskOwner: '', currentStatus: "Draft", submitted: false, editable: true, lastEditedBy: 'Not Edited Yet' }]);
   const [sendButton, setSendButton] = useState("Send To Owner")
   const [editButton, setEditButton] = useState('Save Changes')
   const [loading, setLoading] = useState(false)
@@ -181,8 +181,10 @@ export default function Page() {
           impact: String(item.impact?.value || 4),
           riskScore: item.riskScore?.value || 12,
           existingControl: item.existingControl?.value || "",
-          control: item.control?.value || 50,
+          controlEffectiveness: item.controlEffectiveness?.value || "Strong",
+          control: item.control?.value || 75,
           residualRisk: item.residualRisk?.value || 5,
+          treatmentOption: item.treatmentOption?.value || "Treat",
           mitigationPlan: item.mitigationPlan?.value || "",
           riskOwner: item.riskOwner?.value || "",
 
@@ -200,8 +202,10 @@ export default function Page() {
             impact: item.impact?.comments || [],
             riskScore: item.riskScore?.comments || [],
             existingControl: item.existingControl?.comments || [],
+            controlEffectiveness: item.controlEffectiveness?.comments || [],
             control: item.control?.comments || [],
             residualRisk: item.residualRisk?.comments || [],
+            treatmentOption: item.treatmentOption?.comments || [],
             mitigationPlan: item.mitigationPlan?.comments || [],
             riskOwner: item.riskOwner?.comments || [],
           }
@@ -219,8 +223,10 @@ export default function Page() {
             impact: '4',
             riskScore: 12,
             existingControl: '',
-            control: 50,
-            residualRisk: 5,
+            controlEffectiveness: "Strong",
+            control: 75,
+            residualRisk: 3,
+            treatmentOption: "Treat",
             mitigationPlan: '',
             riskOwner: '',
             currentStatus: 'Draft',
@@ -357,8 +363,10 @@ export default function Page() {
       { header: "Risk Score", key: "riskScore", width: 12 },
       { header: "Existing Control", key: "existingControl", width: 40 },
       { header: "Existing Control Comment", key: "existingControlComments", width: 40 },
+      { header: "Control Effectiveness", key: "controlEffectiveness", width: 15 },
       { header: "Control %", key: "control", width: 12 },
       { header: "Residual Risk", key: "residualRisk", width: 15 },
+      { header: "Treatment Option", key: "treatmentOption", width: 15 },
       { header: "Mitigation Plan", key: "mitigationPlan", width: 40 },
       { header: "Mitigation Plan Comment", key: "mitigationPlanComments", width: 40 },
       { header: "Risk Owner", key: "riskOwner", width: 40 },
@@ -392,8 +400,12 @@ export default function Page() {
         riskScore: elem.riskScore.value,
         existingControl: elem.existingControl.value,
         existingControlComments: formatComments(elem.existingControl.comments),
+        controlEffectiveness: elem.controlEffectiveness.value,
+        controlEffectivenessComments: formatComments(elem.controlEffectiveness.comments),
         control: elem.control.value,
         residualRisk: elem.residualRisk.value,
+        treatmentOption: elem.treatmentOption.value,
+        treatmentOption: formatComments(elem.treatmentOption.comments),
         mitigationPlan: elem.mitigationPlan.value,
         mitigationPlanComments: formatComments(elem.mitigationPlan.comments),
         riskOwner: elem.riskOwner.value,
@@ -429,7 +441,7 @@ export default function Page() {
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
-    if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
+    // if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
 
@@ -449,8 +461,9 @@ export default function Page() {
         impact: '4',
         riskScore: 12,
         existingControl: '',
-        control: 50,
-        residualRisk: 5,
+        controlEffectiveness: 'Strong',
+        control: 75,
+        residualRisk: 3,
         mitigationPlan: '',
         riskOwner: '',
         currentStatus: 'Draft',
@@ -519,22 +532,29 @@ export default function Page() {
 
 
   // HANDLE INPUT CHANGE WHENEVER USER ENTER VALUES IN THE FIELD
-  const handleInputChange = (id, field, value) => {
-    setRows(prevRows =>
-      prevRows.map(row => {
-        if (row.id === id) {
-          const updatedRow = { ...row, [field]: value };
-          if (field === 'likelihood' || field === 'impact') {
-            const likelihood = field === 'likelihood' ? parseInt(value) : parseInt(row.likelihood || 0);
-            const impact = field === 'impact' ? parseInt(value) : parseInt(row.impact || 0);
-            updatedRow.riskScore = likelihood * impact;
-          }
-          return updatedRow;
-        }
-        return row;
-      })
-    );
-  };
+const handleInputChange = (id, field, value) => {
+  setRows(prevRows =>
+    prevRows.map(row => {
+      if (row.id === id) {
+        const updatedRow = { ...row, [field]: value };
+
+        // Parse existing values safely
+        const likelihood = parseInt(field === 'likelihood' ? value : row.likelihood || 0);
+        const impact = parseInt(field === 'impact' ? value : row.impact || 0);
+        const control = parseInt(field === 'control' ? value : row.control || 0);
+
+        // Calculate riskScore
+        updatedRow.riskScore = likelihood * impact;
+
+        // Calculate residualRisk using the formula
+        updatedRow.residualRisk = (likelihood * impact) * (1 - (control / 100));
+
+        return updatedRow;
+      }
+      return row;
+    })
+  );
+};
 
 
 
@@ -558,8 +578,10 @@ export default function Page() {
       impact: Number(row.impact),
       riskScore: row.riskScore,
       existingControl: row.existingControl,
+      controlEffectiveness: row.controlEffectiveness,
       control: Number(row.control),
       residualRisk: row.residualRisk,
+      treatmentOption: row.treatmentOption,
       mitigationPlan: row.mitigationPlan,
       riskOwner: row.riskOwner,
       approvedBy: "",
@@ -918,6 +940,7 @@ export default function Page() {
 
 
 
+
   return (
     <div className={styles.dataPage}>
       <img src="Line.png" alt="" className={styles.topLine} />
@@ -968,7 +991,7 @@ export default function Page() {
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              <button className={`btn-a flex-btn ${styles.filterBtn}`}>Backup Till {getFormattedDate()}</button>
+              {/* <button className={`btn-a flex-btn ${styles.filterBtn}`}>Backup Till {getFormattedDate()}</button> */}
               <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
             </div>
           </div>
@@ -1023,8 +1046,10 @@ export default function Page() {
               <th>Impact</th>
               <th>Risk Score</th>
               <th>Existing Control</th>
+              <th>Control Effectiveness</th>
               <th>Control %</th>
               <th>Residual Risk</th>
+              <th>Treatment Option</th>
               <th>Mitigation Plan</th>
               <th>Risk Owner</th>
               <th>Actions</th>
@@ -1116,7 +1141,7 @@ export default function Page() {
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  <div className={styles.ledger}>
+                  {/* <div className={styles.ledger}>
                     <div className={styles.ledgerInfo}>
                       <div className={styles.ledgerColor} style={{ backgroundColor: "red" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
@@ -1133,7 +1158,7 @@ export default function Page() {
                       <div className={styles.ledgerColor} style={{ backgroundColor: "cornflowerblue" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
                     </div>
-                  </div>
+                  </div> */}
                 </td>
 
                 {/* Impact */}
@@ -1146,7 +1171,7 @@ export default function Page() {
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  <div className={styles.ledger}>
+                  {/* <div className={styles.ledger}>
                     <div className={styles.ledgerInfo}>
                       <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
@@ -1163,7 +1188,7 @@ export default function Page() {
                       <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
                     </div>
-                  </div>
+                  </div> */}
                 </td>
 
                 {/* Risk Score */}
@@ -1172,7 +1197,7 @@ export default function Page() {
                     type="number"
                     className="input-field"
                     value={row.riskScore} disabled />
-                  <div className={styles.ledger}>
+                  {/* <div className={styles.ledger}>
                     <div className={styles.ledgerInfo}>
                       <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
@@ -1189,7 +1214,7 @@ export default function Page() {
                       <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
                       <p className={styles.ledgerDetail}>Detail About Ledger</p>
                     </div>
-                  </div>
+                  </div> */}
                 </td>
 
                 {/* Existing Control */}
@@ -1212,46 +1237,51 @@ export default function Page() {
                   </div>
                 </td>
 
+                {/* Control Effectiveness */}
+                <td>
+                  <select
+                    className="input-field"
+                    value={row.controlEffectiveness}
+                    onChange={(e) => {
+                      const selectedEffectiveness = e.target.value;
+                      let controlValue = 25;  // Default fallback
+
+                      if (selectedEffectiveness === "Strong") controlValue = 75;
+                      else if (selectedEffectiveness === "Adequate") controlValue = 50;
+                      else if (selectedEffectiveness === "Needs Improvement") controlValue = 25;
+                      else if (selectedEffectiveness === "Not Effective") controlValue = 0;
+
+                      handleInputChange(row.id, "controlEffectiveness", selectedEffectiveness);
+                      handleInputChange(row.id, "control", controlValue);
+                    }}
+                    disabled={requiredData.role === "admin" || (row.submitted && !row.editable)}
+                  >
+                    <option value="Strong">Strong</option>
+                    <option value="Adequate">Adequate</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Not Effective">Not Effective</option>
+                  </select>
+                </td>
 
                 {/* Control */}
-                <td style={{ backgroundColor: row.control >= 0 && row.control <= 24 ? "#FF0000" : row.control >= 25 && row.control <= 49 ? "#ffae00ff" : row.control >= 50 && row.control <= 74 ? "#FFFF00" : "#59bd59ff", position: "relative" }} className={styles.dropDownOption}>
-                  {/* <input
+                <td style={{
+                  backgroundColor:
+                    row.control >= 0 && row.control <= 24 ? "#FF0000" :
+                      row.control >= 25 && row.control <= 49 ? "#ffae00ff" :
+                        row.control >= 50 && row.control <= 74 ? "#FFFF00" :
+                          "#59bd59ff",
+                  position: "relative"
+                }}>
+                  <input
                     type="number"
                     className="input-field"
                     value={row.control}
                     onChange={(e) => handleInputChange(row.id, "control", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
-                  /> */}
-                  <select
-                    className="input-field"
-                    value={row.control}
-                    onChange={(e) => handleInputChange(row.id, "control", e.target.value)}
-                    disabled={requiredData.role === "admin" || (row.submitted && !row.editable)}
-                  >
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={75}>75</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <div className={styles.ledger}>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                  </div>
+                    // disabled={requiredData.role === "admin" || row.submitted && !row.editable}
+                    disabled
+                  />
                 </td>
+
 
                 {/* Residual Risk */}
                 <td>
@@ -1260,8 +1290,24 @@ export default function Page() {
                     className="input-field"
                     value={row.residualRisk}
                     onChange={(e) => handleInputChange(row.id, "residualRisk", e.target.value)}
-                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
+                    // disabled={requiredData.role === "admin" || row.submitted && !row.editable}
+                    disabled
                   />
+                </td>
+
+                {/* Treatment option */}
+                <td>
+                  <select
+                    className="input-field"
+                    value={row.treatmentOption}
+                    onChange={(e) => handleInputChange(row.id, "treatmentOption", e.target.value)}
+                    disabled={requiredData.role === "admin" || row.submitted && !row.editable}
+                  >
+                    <option value="Treat">Treat</option>
+                    <option value="Tolerate">Tolerate</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="Terminate">Terminate</option>
+                  </select>
                 </td>
 
                 {/* Mitigation Plan */}
