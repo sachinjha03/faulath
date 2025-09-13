@@ -41,14 +41,16 @@ export default function Home() {
   return (
     <div className={styles.landingSection}>
       <Navbar/>
-      <h1>Business Continuity Management</h1>
+      {/* <h1>BCM</h1>
+      <h2>Business Continuity Management</h2> */}
+      <img src="/BCM.png" alt="" className={styles.bcmLogo} />
       <p>Resilience in <span>Action</span>, Continuity by <span>Design</span></p>
       <button className={`btn-a filled-btn ${styles.btnA}`} onClick={handleAuthentication}>Begin</button>
-      <div className={styles.circleParent}>
+      {/* <div className={styles.circleParent}>
         <div className={styles.smallCircle}></div>
         <div className={` ${styles.smallCircle} ${styles.mediumCircle}`}></div>
         <div className={` ${styles.smallCircle} ${styles.largeCircle}`}></div>
-      </div>
+      </div> */}
     </div>
   );
 }

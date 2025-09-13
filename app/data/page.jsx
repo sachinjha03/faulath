@@ -52,6 +52,11 @@ export default function Page() {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
   const [rawData, setRawData] = useState([])
+  const [likelihoodFilter, setLikelihoodFilter] = useState("");
+  const [impactFilter, setImpactFilter] = useState("");
+  const [controlEffectivenessFilter, setControlEffectivenessFilter] = useState("");
+
+
 
 
 
@@ -532,29 +537,29 @@ export default function Page() {
 
 
   // HANDLE INPUT CHANGE WHENEVER USER ENTER VALUES IN THE FIELD
-const handleInputChange = (id, field, value) => {
-  setRows(prevRows =>
-    prevRows.map(row => {
-      if (row.id === id) {
-        const updatedRow = { ...row, [field]: value };
+  const handleInputChange = (id, field, value) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.id === id) {
+          const updatedRow = { ...row, [field]: value };
 
-        // Parse existing values safely
-        const likelihood = parseInt(field === 'likelihood' ? value : row.likelihood || 0);
-        const impact = parseInt(field === 'impact' ? value : row.impact || 0);
-        const control = parseInt(field === 'control' ? value : row.control || 0);
+          // Parse existing values safely
+          const likelihood = parseInt(field === 'likelihood' ? value : row.likelihood || 0);
+          const impact = parseInt(field === 'impact' ? value : row.impact || 0);
+          const control = parseInt(field === 'control' ? value : row.control || 0);
 
-        // Calculate riskScore
-        updatedRow.riskScore = likelihood * impact;
+          // Calculate riskScore
+          updatedRow.riskScore = likelihood * impact;
 
-        // Calculate residualRisk using the formula
-        updatedRow.residualRisk = (likelihood * impact) * (1 - (control / 100));
+          // Calculate residualRisk using the formula
+          updatedRow.residualRisk = (likelihood * impact) * (1 - (control / 100));
 
-        return updatedRow;
-      }
-      return row;
-    })
-  );
-};
+          return updatedRow;
+        }
+        return row;
+      })
+    );
+  };
 
 
 
@@ -937,6 +942,23 @@ const handleInputChange = (id, field, value) => {
 
   // console.log(rows);
 
+  const filteredRows = rows.filter(row => {
+    const likelihoodMatch =
+      likelihoodFilter === "" ||
+      Number(row.likelihood) === Number(likelihoodFilter);
+
+    const impactMatch =
+      impactFilter === "" ||
+      Number(row.impact) === Number(impactFilter);
+
+    const controlEffectivenessMatch =
+      controlEffectivenessFilter === "" ||
+      row.controlEffectiveness === controlEffectivenessFilter;
+
+    return likelihoodMatch && impactMatch && controlEffectivenessMatch;
+  });
+
+
 
 
 
@@ -1042,11 +1064,49 @@ const handleInputChange = (id, field, value) => {
               <th>Risks</th>
               <th>Definition/Potential Cause</th>
               <th>Category</th>
-              <th>Likelihood</th>
-              <th>Impact</th>
+              <th>
+                Likelihood<br />
+                <select
+                  value={likelihoodFilter}
+                  onChange={(e) => setLikelihoodFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </th>
+              <th>
+                Impact<br />
+                <select
+                  value={impactFilter}
+                  onChange={(e) => setImpactFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </th>
               <th>Risk Score</th>
               <th>Existing Control</th>
-              <th>Control Effectiveness</th>
+              <th>
+                Control Effectiveness<br />
+                <select
+                  value={controlEffectivenessFilter}
+                  onChange={(e) => setControlEffectivenessFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  <option value="Strong">Strong</option>
+                  <option value="Adequate">Adequate</option>
+                  <option value="Needs Improvement">Needs Improvement</option>
+                  <option value="Not Effective">Not Effective</option>
+                </select>
+              </th>
+
               <th>Control %</th>
               <th>Residual Risk</th>
               <th>Treatment Option</th>
@@ -1057,8 +1117,9 @@ const handleInputChange = (id, field, value) => {
               <th>Last Edit</th>
             </tr>
           </thead>
+
           <tbody>
-            {rows.map((row, index) => (
+            {filteredRows.map((row, index) => (
               <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
                 <td>{String(index + 1).padStart(3, '0')}</td>
 
@@ -1141,24 +1202,6 @@ const handleInputChange = (id, field, value) => {
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  {/* <div className={styles.ledger}>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "red" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "green" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "cornflowerblue" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                  </div> */}
                 </td>
 
                 {/* Impact */}
@@ -1171,24 +1214,6 @@ const handleInputChange = (id, field, value) => {
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
-                  {/* <div className={styles.ledger}>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                  </div> */}
                 </td>
 
                 {/* Risk Score */}
@@ -1197,24 +1222,6 @@ const handleInputChange = (id, field, value) => {
                     type="number"
                     className="input-field"
                     value={row.riskScore} disabled />
-                  {/* <div className={styles.ledger}>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                    <div className={styles.ledgerInfo}>
-                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
-                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
-                    </div>
-                  </div> */}
                 </td>
 
                 {/* Existing Control */}
@@ -1575,8 +1582,27 @@ const handleInputChange = (id, field, value) => {
 
 
       </div>
-      <DownloadRAData />
+      {requiredData?.role === "super admin" && <DownloadRAData />}
 
     </div>
   );
 }
+
+{/* <div className={styles.ledger}>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "blue" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "gray" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "pink" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                    <div className={styles.ledgerInfo}>
+                      <div className={styles.ledgerColor} style={{ backgroundColor: "yellowGreen" }}></div>
+                      <p className={styles.ledgerDetail}>Detail About Ledger</p>
+                    </div>
+                  </div> */}

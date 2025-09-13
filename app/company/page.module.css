@@ -45,7 +45,10 @@
   position: relative;
   overflow: hidden;
 }
-
+.companyCard img{
+  width: 180px;
+  position: relative;
+}
 .companyCard::before {
   content: "";
   position: absolute;
@@ -60,9 +63,10 @@
 
 
 
-.companyCard h3 {
+.companyCard h4 {
   font-weight: 400;
   position: relative;
+  /* z-index: 20; */
 }
 
 .companyCard p {

@@ -9,7 +9,7 @@
 }
 
 :root {
-  --dark_purple: #fff;
+  --dark_purple: #6b21a8;
   --light_purple: #8c66df;
   --black: #050520;
 }
@@ -324,6 +324,14 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 
+/* In your CSS file (e.g., YourPage.module.css) */
+.filter-dropdown {
+  width: 100%;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  outline: none;
+}
 
 
 /* RESPONSIVENESS */

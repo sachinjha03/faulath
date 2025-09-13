@@ -2,7 +2,10 @@
 .landingSection {
   width: 100%;
   height: 100vh;
-  background-color: var(--black);
+  /* background-color: var(--black); */
+  /* background-color: #160226; */
+  background: conic-gradient(from 90deg at 40% -25%,
+      #e0bbff, #c084fc, #a855f7, #9333ea, #7e22ce, #6b21a8, #581c87, #3b0764, #581c87, #6b21a8, #7e22ce, #9333ea, #a855f7, #c084fc, #e0bbff, #e0bbff, #e0bbff ,  #e0bbff, #c084fc, #a855f7, #9333ea,);
   color: white;
   display: flex;
   flex-direction: column;
@@ -21,8 +24,19 @@
 
 .landingSection h1 {
   z-index: 90;
+  font-size: 10rem;
+  font-weight: 400;
+  letter-spacing: 1rem;
+  margin-bottom: -30px;
+  color: var(--light_purple);
 }
-
+.bcmLogo{
+  width: 80%;
+  max-width: 500px;
+}
+.landingSection h2{
+  font-weight: 300;
+}
 .landingSection .btnA {
   z-index: 90;
 }

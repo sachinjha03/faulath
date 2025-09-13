@@ -1,5 +1,5 @@
 'use client'
-import React, { Suspense, useState, useEffect , useContext } from 'react'
+import React, { Suspense, useState, useEffect, useContext } from 'react'
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { MyContext } from '../context/ContextApi';
 import { jwtDecode } from 'jwt-decode';
 import styles from "./page.module.css"
+// import foulathLogo from "./foulath-logo.png"
 
 
 
@@ -27,39 +28,39 @@ function CompanyContent() {
 
   const [data, setData] = useState({ email: "", password: "", role: "champion", module: "" })
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [buttonText , setButtonText] = useState("Verify Identitiy")
-  const [loading , setLoading] = useState(false)
+  const [buttonText, setButtonText] = useState("Verify Identitiy")
+  const [loading, setLoading] = useState(false)
   const MyContextApi = useContext(MyContext)
 
-    const [forgotScreen , setForgotScreen] = useState(false)
-    const [newData , setNewData] = useState({email:"" , password:""})
-    const handleForgotDataChange = (e) => {
-        setNewData({...newData , [e.target.name]:e.target.value})
+  const [forgotScreen, setForgotScreen] = useState(false)
+  const [newData, setNewData] = useState({ email: "", password: "" })
+  const handleForgotDataChange = (e) => {
+    setNewData({ ...newData, [e.target.name]: e.target.value })
+  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const response = await fetch(`${MyContextApi.backendURL}/api/forgot-password`, {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ email: newData.email, password: newData.password })
+    })
+    const json = await response.json()
+    if (json.success) {
+      alert("SUCCESS!! Password Changes Successfully")
+      window.location.reload()
+    } else {
+      alert("User Doesn't Exist")
     }
-    const handleSubmit = async(e) => {
-        e.preventDefault();
-        const response = await fetch(`${MyContextApi.backendURL}/api/forgot-password` , {
-            method:'PUT',
-            headers:{
-                'content-type':'application/json'
-            },
-            body : JSON.stringify({email:newData.email , password:newData.password})
-        })
-        const json = await response.json()
-       if(json.success){
-        alert("SUCCESS!! Password Changes Successfully")
-        window.location.reload()
-       }else{
-        alert("User Doesn't Exist")
-       }
-        
-    }
-    const handleScreenOpen = () => {
-        setForgotScreen(true)
-    }
-    const handleScreenClose = () => {
-        setForgotScreen(false)
-    }
+
+  }
+  const handleScreenOpen = () => {
+    setForgotScreen(true)
+  }
+  const handleScreenClose = () => {
+    setForgotScreen(false)
+  }
 
 
   useEffect(() => {
@@ -67,14 +68,14 @@ function CompanyContent() {
     if (token) {
       const decoded_token = jwtDecode(token);
       if (decoded_token.department == "RA") {
-          router.push("/data")
+        router.push("/data")
       } else {
         router.push("/bia-data")
       }
     }
   }, []);
 
-  
+
 
 
   useEffect(() => {
@@ -102,36 +103,36 @@ function CompanyContent() {
     setData({ ...data, [e.target.name]: e.target.value })
   }
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setButtonText("Verifying...");
-  setLoading(true)
+    e.preventDefault();
+    setButtonText("Verifying...");
+    setLoading(true)
 
-  const response = await fetch(`${MyContextApi.backendURL}/api/login`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      email: data.email.trim().toLowerCase(), password: data.password.trim(), module: name === "RA" ? "" : data.module, department: name, role: data.role, company: selectedCompany
-    })
-  });
+    const response = await fetch(`${MyContextApi.backendURL}/api/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: data.email.trim().toLowerCase(), password: data.password.trim(), module: name === "RA" ? "" : data.module, department: name, role: data.role, company: selectedCompany
+      })
+    });
 
-  const json = await response.json();
-  
-  if (json.success) {
-    localStorage.setItem("auth-token", json.token);
-    if (name == "RA") {
-      router.push('/data');
-    } else if (name == "BIA") {
-      router.push("/bia-data");
+    const json = await response.json();
+
+    if (json.success) {
+      localStorage.setItem("auth-token", json.token);
+      if (name == "RA") {
+        router.push('/data');
+      } else if (name == "BIA") {
+        router.push("/bia-data");
+      }
+    } else {
+      alert("Invalid Credentials");
     }
-  } else {
-    alert("Invalid Credentials");
-  }
 
-  setButtonText("Verify Identity");
-  setLoading(false)
-};
+    setButtonText("Verify Identity");
+    setLoading(false)
+  };
 
 
   return (
@@ -148,15 +149,30 @@ function CompanyContent() {
       <div className={styles.companyLandingSectionMiddle}>
         {['Bahrain Steel', 'Sulb', 'Sulb Saudi', 'Foulath'].map((company, index) => (
           <div key={index} className={styles.companyCard} id={`companyCard${index + 1}`}>
-            <h3>{company}</h3>
+            <img
+              src={
+                company === 'Foulath' ? '/foulath-logo.png' :
+                  company === 'Bahrain Steel' ? '/bahrain-steel-logo.png' :
+                    company === 'Sulb' ? '/sulb-logo-1.webp' :
+                      company === 'Sulb Saudi' ? '/saudi-sulb-logo-2.png' :
+                        '/default-logo.png'  // fallback image
+              }
+              alt={company}
+            />
+            <h4>{company == "Sulb" ? "Sulb Bahrain" : company}</h4>
             <p>Identify and evaluate the potential effects of a business disruption.</p>
-            <button className={`btn-a outline-btn ${styles.btnA} `} onClick={() => {
-              setSelectedCompany(company);
-              displayLogin();
-            }}>Select</button>
-
+            <button
+              className={`btn-a outline-btn ${styles.btnA}`}
+              onClick={() => {
+                setSelectedCompany(company);
+                displayLogin();
+              }}
+            >
+              Select
+            </button>
           </div>
         ))}
+
       </div>
       {loginScreen && <div className={styles.loginScreen}>
         <form action="#" className={styles.loginForm} onSubmit={handleLogin}>
@@ -189,25 +205,25 @@ function CompanyContent() {
               </select>
             </div>
           )}
-          <a href="#" onClick={handleScreenOpen} style={{color:"white"}}>Forgot Password ?</a>
+          <a href="#" onClick={handleScreenOpen} style={{ color: "white" }}>Forgot Password ?</a>
           <button className={`btn-a filled-btn ${styles.filledBtn}`} disabled={loading}>{buttonText}</button>
         </form>
       </div>}
       {forgotScreen && <div className={styles.forgotPasswordScreen}>
         <form action="#" className={styles.forgotPasswordForm} onSubmit={handleSubmit}>
-            <CloseIcon className={styles.closeIcon} onClick={handleScreenClose}/>
-            <h3>Forgot Your Password</h3>
-            <div className="input-box">
-                <label htmlFor="email">Your Registered Email</label>
-                <input type="email" name="email" id="email" className='input-field' value={newData.email} onChange={handleForgotDataChange} required/>
-            </div>
-            <div className="input-box">
-                <label htmlFor="password">New Password</label>
-                <input type="password" name="password" id="password" className='input-field' value={newData.password} onChange={handleForgotDataChange} required/>
-            </div>
-            <button className="btn-a purple-btn">Update Password</button>
+          <CloseIcon className={styles.closeIcon} onClick={handleScreenClose} />
+          <h3>Forgot Your Password</h3>
+          <div className="input-box">
+            <label htmlFor="email">Your Registered Email</label>
+            <input type="email" name="email" id="email" className='input-field' value={newData.email} onChange={handleForgotDataChange} required />
+          </div>
+          <div className="input-box">
+            <label htmlFor="password">New Password</label>
+            <input type="password" name="password" id="password" className='input-field' value={newData.password} onChange={handleForgotDataChange} required />
+          </div>
+          <button className="btn-a purple-btn">Update Password</button>
         </form>
-    </div>}
+      </div>}
     </div>
   );
 }

@@ -25,6 +25,7 @@ import DownloadBIAData from '../components/DownloadBIAData';
 
 export default function Page() {
   const router = useRouter();
+  const [hoveredField, setHoveredField] = useState(null);
   const [requiredData, setRequiredData] = useState({});
   const [successScreen, setSuccessScreen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
@@ -292,142 +293,142 @@ export default function Page() {
     );
   };
 
-const handleSubmit = async (row) => {
-  const fields = getFields();
-  const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
-  if (isEmpty) return alert("Please fill all fields before submitting.");
+  const handleSubmit = async (row) => {
+    const fields = getFields();
+    const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
+    if (isEmpty) return alert("Please fill all fields before submitting.");
 
-  const token = localStorage.getItem("auth-token");
+    const token = localStorage.getItem("auth-token");
 
-  // Flatten form data before sending
-  const formData = {};
-  fields.forEach(f => {
-    const fieldData = row[f.name] || {};
-    let value = fieldData.value;
+    // Flatten form data before sending
+    const formData = {};
+    fields.forEach(f => {
+      const fieldData = row[f.name] || {};
+      let value = fieldData.value;
 
-    if (value && typeof value === "object" && "value" in value) {
-      value = value.value; // flatten nested values
+      if (value && typeof value === "object" && "value" in value) {
+        value = value.value; // flatten nested values
+      }
+
+      formData[sanitize(f.name)] = {
+        value: value || "",
+        comments: fieldData.comments || []
+      };
+    });
+
+    // --- Status logic ---
+    let statusForSubmit;
+    const isSuperAdmin = requiredData.role === "super admin";
+
+    if (!row.dataId && isSuperAdmin) {
+      // ✅ New record created by Super Admin
+      statusForSubmit = "Data Created By Super Admin";
+    } else if (!row.dataId) {
+      // ✅ New record created by normal user
+      statusForSubmit = "Pending for Owner Approval";
+    } else {
+      // ✅ Editing existing record
+      statusForSubmit = row.currentStatus; // keep whatever status it already had
     }
 
-    formData[sanitize(f.name)] = {
-      value: value || "",
-      comments: fieldData.comments || []
+    const payload = {
+      company: requiredData.company,
+      department: requiredData.department,
+      module: requiredData.module,
+      createdBy: requiredData.email,
+      userId: requiredData.userId,
+      formData
     };
-  });
 
-  // --- Status logic ---
-  let statusForSubmit;
-  const isSuperAdmin = requiredData.role === "super admin";
+    try {
+      setLoading(true);
 
-  if (!row.dataId && isSuperAdmin) {
-    // ✅ New record created by Super Admin
-    statusForSubmit = "Data Created By Super Admin";
-  } else if (!row.dataId) {
-    // ✅ New record created by normal user
-    statusForSubmit = "Pending for Owner Approval";
-  } else {
-    // ✅ Editing existing record
-    statusForSubmit = row.currentStatus; // keep whatever status it already had
-  }
-
-  const payload = {
-    company: requiredData.company,
-    department: requiredData.department,
-    module: requiredData.module,
-    createdBy: requiredData.email,
-    userId: requiredData.userId,
-    formData
-  };
-
-  try {
-    setLoading(true);
-
-    if (row.dataId) {
-      // --- UPDATE ---
-      setEditButton("Saving...");
-      const res = await fetch(
-        `${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            ...payload,
-            currentStatus: statusForSubmit,
-            lastEditedBy: { email: requiredData.email }
-          })
-        }
-      );
-      const json = await res.json();
-      if (json.success) {
-        alert("Changes Saved Successfully!");
-        setRows(prev =>
-          prev.map(r =>
-            r.id === row.id
-              ? {
+      if (row.dataId) {
+        // --- UPDATE ---
+        setEditButton("Saving...");
+        const res = await fetch(
+          `${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              ...payload,
+              currentStatus: statusForSubmit,
+              lastEditedBy: { email: requiredData.email }
+            })
+          }
+        );
+        const json = await res.json();
+        if (json.success) {
+          alert("Changes Saved Successfully!");
+          setRows(prev =>
+            prev.map(r =>
+              r.id === row.id
+                ? {
                   ...r,
                   editable: false,
                   currentStatus: statusForSubmit,
                   dataId: json.data._id
                 }
-              : r
-          )
-        );
-      } else {
-        alert("Update failed.");
-      }
-    } else {
-      // --- CREATE ---
-      setSendButton("Sending...");
-      const res = await fetch(
-        `${MyContextApi.backendURL}/api/add-business-impact-analysis-data`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            ...payload,
-            currentStatus: statusForSubmit
-          })
+                : r
+            )
+          );
+        } else {
+          alert("Update failed.");
         }
-      );
-      const json = await res.json();
-      if (json.success) {
-        alert(
-          isSuperAdmin
-            ? "Data created successfully by Super Admin!"
-            : "Data sent to Owner successfully!"
+      } else {
+        // --- CREATE ---
+        setSendButton("Sending...");
+        const res = await fetch(
+          `${MyContextApi.backendURL}/api/add-business-impact-analysis-data`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              ...payload,
+              currentStatus: statusForSubmit
+            })
+          }
         );
-        const updatedRows = rows.map(r =>
-          r.id === row.id
-            ? {
+        const json = await res.json();
+        if (json.success) {
+          alert(
+            isSuperAdmin
+              ? "Data created successfully by Super Admin!"
+              : "Data sent to Owner successfully!"
+          );
+          const updatedRows = rows.map(r =>
+            r.id === row.id
+              ? {
                 ...r,
                 submitted: true,
                 editable: false,
                 currentStatus: statusForSubmit,
                 dataId: json.data._id
               }
-            : r
-        );
-        updatedRows.push(createEmptyRow());
-        setRows(updatedRows);
-      } else {
-        alert("Submission failed. Please try again.");
+              : r
+          );
+          updatedRows.push(createEmptyRow());
+          setRows(updatedRows);
+        } else {
+          alert("Submission failed. Please try again.");
+        }
       }
+    } catch (error) {
+      console.error("Submit Error:", error);
+      alert("An error occurred while submitting the data.");
+    } finally {
+      setSendButton("Send To Owner");
+      setEditButton("Save Changes");
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Submit Error:", error);
-    alert("An error occurred while submitting the data.");
-  } finally {
-    setSendButton("Send To Owner");
-    setEditButton("Save Changes");
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -573,7 +574,7 @@ const handleSubmit = async (row) => {
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
-    // if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
+    if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
 
@@ -829,47 +830,103 @@ const handleSubmit = async (row) => {
                 <td>{index + 1}</td>
                 {getFields().map(field => (
                   <td key={field.name} className={styles.cellWithIcon}>
-                    {field.type !== "text" ? (
-                      <div style={{ position: "relative" }}>
+                    <div style={{ position: "relative", width: "300px" }}
+                      onMouseEnter={() => setHoveredField({ rowId: row.id, fieldName: field.name })}
+                      onMouseLeave={() => setHoveredField(null)}
+                    >
+                      {(field.name === "Max. Tolerable Period of Disruption (MTPD)" ||
+                        field.name === "Recovery Time Objective (RTO)") ? (
+
+                        <select
+                          className="input-field"
+                          value={row[field.name]?.value || ""}
+                          onChange={(e) => handleChange(row.id, field.name, e.target.value)}
+                          disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                          style={{ width: "200px" }}
+                        >
+                          <option value="">Select</option>
+
+                          {field.name === "Max. Tolerable Period of Disruption (MTPD)" && (
+                            <>
+                              <option value="1 day">1 day</option>
+                              <option value="1 week">1 week</option>
+                              <option value="2 week">2 week</option>
+                              <option value="3 week">3 week</option>
+                              <option value="1 month">1 month</option>
+                              <option value="2 month">2 month</option>
+                            </>
+                          )}
+
+                          {field.name === "Recovery Time Objective (RTO)" && (
+                            <>
+                              <option value="1 day">1 day</option>
+                              <option value="1 week">1 week</option>
+                              <option value="2 week">2 week</option>
+                              <option value="3 week">3 week</option>
+                              <option value="1 month">1 month</option>
+                              <option value="2 month">2 month</option>
+                            </>
+                          )}
+                        </select>
+
+                      ) : field.type !== "text" ? (
                         <input
                           type={field.type}
-                          value={typeof row[field.name] === 'object' ? row[field.name]?.value || '' : row[field.name] || ''}
+                          value={row[field.name]?.value || ""}
                           onChange={(e) => handleChange(row.id, field.name, e.target.value)}
                           disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
                           className="input-field"
                         />
-                        <AddCommentIcon
-                          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
-                          onClick={() => openCommentPopup(row.id, field.name, "add")}
-                          titleAccess="Add Comment"
-                        />
-                        <VisibilityIcon
-                          style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
-                          onClick={() => openCommentPopup(row.id, field.name, "view")}
-                          titleAccess="View Comments"
-                        />
-                      </div>
-                    ) : (
-                      <div style={{ position: "relative" }}>
+                      ) : (
                         <textarea
                           className="input-field"
-                          value={typeof row[field.name] === 'object' ? row[field.name]?.value || '' : row[field.name] || ''}
+                          value={row[field.name]?.value || ""}
                           onChange={(e) => handleChange(row.id, field.name, e.target.value)}
                           disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
                         />
-                        <AddCommentIcon
-                          style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
-                          onClick={() => openCommentPopup(row.id, field.name, "add")}
-                          titleAccess="Add Comment"
-                        />
-                        <VisibilityIcon
-                          style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
-                          onClick={() => openCommentPopup(row.id, field.name, "view")}
-                          titleAccess="View Comments"
-                        />
-                      </div>
-                    )}
+                      )}
+
+                      {/* Comment Tooltip */}
+                      {hoveredField?.rowId === row.id &&
+                        hoveredField?.fieldName === field.name &&
+                        row[field.name]?.comments?.length > 0 && (
+                          <div style={{
+                            position: "absolute",
+                            top: "-50px",
+                            left: "0",
+                            backgroundColor: "#f5f5f5",
+                            padding: "5px",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
+                            zIndex: 10,
+                            fontSize: "8px",
+                            whiteSpace: "pre-wrap",
+                            textAlign:"left"
+                          }}>
+                            {row[field.name].comments.map((c, i) => (
+                              <div key={i} style={{ marginBottom: "4px" }}>
+                                <strong>{c.date}:</strong> {c.text}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                      <AddCommentIcon
+                        style={{ position: "absolute", top: 10, right: 10, cursor: "pointer", color: "#1976d2" }}
+                        onClick={() => openCommentPopup(row.id, field.name, "add")}
+                        titleAccess="Add Comment"
+                      />
+                      <VisibilityIcon
+                        style={{ position: "absolute", top: 30, right: 10, cursor: "pointer", color: "#1976d2" }}
+                        onClick={() => openCommentPopup(row.id, field.name, "view")}
+                        titleAccess="View Comments"
+                      />
+                    </div>
                   </td>
+
+
+
 
                 ))}
                 <td>
@@ -1151,7 +1208,7 @@ const handleSubmit = async (row) => {
 
       </div>
 
-      <DownloadBIAData />
+      {requiredData.role === "super admin" && <DownloadBIAData />}
     </div>
   );
 }
