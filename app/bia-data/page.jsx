@@ -848,23 +848,35 @@ export default function Page() {
 
                           {field.name === "Max. Tolerable Period of Disruption (MTPD)" && (
                             <>
+                              <option value="3 Hrs">3 Hrs</option>
+                              <option value="6 Hrs">6 Hrs</option>
+                              <option value="9 Hrs">9 Hrs</option>
                               <option value="1 day">1 day</option>
+                              <option value="2 day">2 day</option>
+                              <option value="3 day">3 day</option>
                               <option value="1 week">1 week</option>
                               <option value="2 week">2 week</option>
                               <option value="3 week">3 week</option>
                               <option value="1 month">1 month</option>
                               <option value="2 month">2 month</option>
+                              <option value="3 month">3 month</option>
                             </>
                           )}
 
                           {field.name === "Recovery Time Objective (RTO)" && (
                             <>
+                              <option value="3 Hrs">3 Hrs</option>
+                              <option value="6 Hrs">6 Hrs</option>
+                              <option value="9 Hrs">9 Hrs</option>
                               <option value="1 day">1 day</option>
+                              <option value="2 day">2 day</option>
+                              <option value="3 day">3 day</option>
                               <option value="1 week">1 week</option>
                               <option value="2 week">2 week</option>
                               <option value="3 week">3 week</option>
                               <option value="1 month">1 month</option>
                               <option value="2 month">2 month</option>
+                              <option value="3 month">3 month</option>
                             </>
                           )}
                         </select>
