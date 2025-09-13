@@ -264,7 +264,7 @@
 }
 .dataPageBottom table thead{
   position: sticky;
-  top: -5%;
+  top: -8%;
   background-color: white;
   z-index: 99;
 }

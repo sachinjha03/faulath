@@ -1060,6 +1060,14 @@ export default function Page() {
         <table>
           <thead>
             <tr>
+              <th colSpan={4} style={{backgroundColor:"#37d92bff"}}>Risk Identification</th>
+              <th colSpan={6} style={{backgroundColor:"#FFFF00"}}>Risk Analysis</th>
+              <th style={{backgroundColor:"#3c9decff"}}>Risk Evaluation</th>
+              <th colSpan={2} style={{backgroundColor:"#e819b1ff"}}>Risk Treatment</th>
+              <th colSpan={1} style={{backgroundColor:"#56c4f4ff"}}>Risk Owner</th>
+              <th colSpan={3} style={{backgroundColor:"#ff8c00ff"}}>Data Status</th>
+            </tr>
+            <tr>
               <th>#S.No</th>
               <th>Risks</th>
               <th>Definition/Potential Cause</th>
