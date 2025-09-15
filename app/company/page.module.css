@@ -197,6 +197,18 @@
 }
 
 @media screen and (max-width:450px) {
+  .companyCard img{
+    width: 80px;
+  }
+  .companyCard{
+    min-height: 220px !important;
+    width: 90%;
+  }
+  .companyLandingSectionMiddle{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
   .loginForm{
     width: 350px;
   }

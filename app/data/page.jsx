@@ -21,6 +21,8 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import DownloadRAData from '../components/DownloadRAData';
+import { createExcelFile, uploadBackup, getFormattedDate } from '../utils/backupUtils';
+
 
 
 
@@ -879,14 +881,14 @@ export default function Page() {
     return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
   };
 
-  function getFormattedDate() {
-    const today = new Date();
-    const dd = String(today.getDate()).padStart(2, "0");
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const yy = String(today.getFullYear()).slice(-2);
+  // function getFormattedDate() {
+  //   const today = new Date();
+  //   const dd = String(today.getDate()).padStart(2, "0");
+  //   const mm = String(today.getMonth() + 1).padStart(2, "0");
+  //   const yy = String(today.getFullYear()).slice(-2);
 
-    return `${dd}/${mm}/${yy}`;
-  }
+  //   return `${dd}/${mm}/${yy}`;
+  // }
 
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
@@ -959,6 +961,20 @@ export default function Page() {
   });
 
 
+   const { backendURL } = useContext(MyContext);
+
+  const handleBackupButtonClick = async () => {
+    try {
+      const { buffer, fileName } = await createExcelFile(rawData);
+      await uploadBackup(buffer, fileName , backendURL);
+      alert("Backup uploaded successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Backup failed: " + error.message);
+    }
+  };
+
+
 
 
 
@@ -1013,7 +1029,8 @@ export default function Page() {
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              {/* <button className={`btn-a flex-btn ${styles.filterBtn}`}>Backup Till {getFormattedDate()}</button> */}
+              {/* <button className={`btn-a flex-btn ${styles.filterBtn}`}onClick={handleBackupButtonClick}>Backup Till {getFormattedDate().display}</button> */}
+
               <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
             </div>
           </div>
@@ -1060,12 +1077,12 @@ export default function Page() {
         <table>
           <thead>
             <tr>
-              <th colSpan={4} style={{backgroundColor:"#37d92bff"}}>Risk Identification</th>
-              <th colSpan={6} style={{backgroundColor:"#FFFF00"}}>Risk Analysis</th>
-              <th style={{backgroundColor:"#3c9decff"}}>Risk Evaluation</th>
-              <th colSpan={2} style={{backgroundColor:"#e819b1ff"}}>Risk Treatment</th>
-              <th colSpan={1} style={{backgroundColor:"#56c4f4ff"}}>Risk Owner</th>
-              <th colSpan={3} style={{backgroundColor:"#ff8c00ff"}}>Data Status</th>
+              <th colSpan={4} style={{ backgroundColor: "#37d92bff" }}>Risk Identification</th>
+              <th colSpan={6} style={{ backgroundColor: "#FFFF00" }}>Risk Analysis</th>
+              <th style={{ backgroundColor: "#3c9decff" }}>Risk Evaluation</th>
+              <th colSpan={2} style={{ backgroundColor: "#e819b1ff" }}>Risk Treatment</th>
+              <th colSpan={1} style={{ backgroundColor: "#56c4f4ff" }}>Risk Owner</th>
+              <th colSpan={3} style={{ backgroundColor: "#ff8c00ff" }}>Data Status</th>
             </tr>
             <tr>
               <th>#S.No</th>
