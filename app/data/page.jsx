@@ -961,12 +961,12 @@ export default function Page() {
   });
 
 
-   const { backendURL } = useContext(MyContext);
+  const { backendURL } = useContext(MyContext);
 
   const handleBackupButtonClick = async () => {
     try {
       const { buffer, fileName } = await createExcelFile(rawData);
-      await uploadBackup(buffer, fileName , backendURL);
+      await uploadBackup(buffer, fileName, backendURL);
       alert("Backup uploaded successfully!");
     } catch (error) {
       console.error(error);
@@ -1036,6 +1036,32 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      <div className="data-page-top-middle">
+          <table className="risk-table">
+            <thead>
+              <tr>
+                <th colSpan={2}>Legend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span className="color-box green"></span></td>
+                <td>Low Risk</td>
+              </tr>
+              <tr>
+                <td><span className="color-box orange"></span></td>
+                <td>Medium Risk</td>
+              </tr>
+              <tr>
+                <td><span className="color-box red"></span></td>
+                <td>High Risk</td>
+              </tr>
+            </tbody>
+          </table>
+
+
+        </div>
 
       <div className={styles.featureRow}>
         <div className={styles.featureRowLeft}>
