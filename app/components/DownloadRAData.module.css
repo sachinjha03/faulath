@@ -67,3 +67,9 @@
   background-color: #cccccc !important;
   cursor: not-allowed;
 }
+
+@media screen and (max-width:600px) {
+  .container{
+    flex-direction: column;
+  }
+}

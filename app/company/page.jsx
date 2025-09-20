@@ -147,7 +147,7 @@ function CompanyContent() {
         <p>Choose the company you are performing the analysis for.</p>
       </div>
       <div className={styles.companyLandingSectionMiddle}>
-        {['Bahrain Steel', 'Sulb', 'Sulb Saudi', 'Foulath'].map((company, index) => (
+        {['Bahrain Steel', 'Foulath', 'Sulb', 'Sulb Saudi' ].map((company, index) => (
           <div key={index} className={styles.companyCard} id={`companyCard${index + 1}`}>
             <img
               src={

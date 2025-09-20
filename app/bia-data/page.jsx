@@ -53,6 +53,47 @@ export default function Page() {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState({});
   const [rawData, setRawData] = useState([])
+  const impactOptions = ["Minor", "Moderate", "Major"];
+
+  const columnGroups = {
+    blank1: [
+      "S.No",
+      "Key Function / Service",
+      "Key Function / Service Owner(s)"
+    ],
+    disruptionImpact: [
+      "Time From Start Of Incident",
+      "Impact To Company",
+      "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)",
+      "Who is Impacted"
+    ],
+    blank2: [
+      "Max. Tolerable Period of Disruption (MTPD)",
+      "Recovery Time Objective (RTO)"
+    ],
+    criticalActivities: [
+      "Staff Requirement",
+      "Facilities & Workspace Requirements",
+      "Critical Records",
+      "Applications& Technology",
+      "Suppliers / Partners"
+    ],
+    backupPlan: [
+      "Short-Term Workarounds?",
+      "Existing Response & Recovery Plans?"
+    ],
+    blank3: [
+      "MTDL Max. Tolerable Data Loss",
+      "RPO Recovery Point Objective",
+      "Additional Information"
+    ],
+    userAction: [
+      "Actions",
+      "Status",
+      "Last Edit"
+    ]
+  };
+
 
   const sanitize = (name) => name.replace(/[^a-zA-Z0-9]/g, "_");
 
@@ -186,22 +227,107 @@ export default function Page() {
     if (!baseRows || baseRows.length === 0) return;
 
     const fields = getFields(); // dynamic fields from formConfig.js
+    const totalColumns = 1 + fields.length * 2 + 3; // S.No + field pairs + Actions + Status + Last Edit
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("BIA Data");
 
-    // Build headers dynamically
+    // Define column widths without headers to avoid automatic header row
     const columns = [
-      { header: "S.No", key: "sno", width: 6 },
+      { key: "sno", width: 6 },
       ...fields.flatMap(field => [
-        { header: field.label, key: field.name, width: Math.max(field.label.length, 20) },
-        { header: `${field.label} Comments`, key: `${field.name}Comments`, width: 40 }
+        { key: field.name, width: Math.max(field.label.length, 20) },
+        { key: `${field.name}Comments`, width: 40 }
       ]),
-      { header: "Status", key: "status", width: 25 },
-      { header: "Last Edit", key: "lastEdit", width: 40 }
+      { key: "actions", width: 25 },
+      { key: "status", width: 25 },
+      { key: "lastEdit", width: 40 }
     ];
 
     worksheet.columns = columns;
+
+    // Helper function to convert column number to Excel-style letters (1=A, 27=AA, etc.)
+    const getColumnLetter = (num) => {
+      let letters = '';
+      while (num > 0) {
+        const remainder = (num - 1) % 26;
+        letters = String.fromCharCode(65 + remainder) + letters;
+        num = Math.floor((num - 1) / 26);
+      }
+      return letters;
+    };
+
+    // --- Row 1: Add grouped header row (new header) ---
+    const groupRow = worksheet.addRow(new Array(totalColumns).fill("")); // Initialize with empty strings
+
+    // Define merge ranges based on specified structure
+    const merges = [];
+    let currentColumn = 1;
+
+    // Expected spans
+    const spans = [
+      { label: "", span: 5 }, // S.No + Key Function / Service + Comment + Owner(s) + Comment
+      { label: "Disruption Impact", span: 8 }, // 4 fields × 2
+      { label: "", span: 4 }, // MTPD + Comment + RTO + Comment
+      { label: "Critical Activities - Resources", span: 10 }, // 5 fields × 2
+      { label: "Current Status of Backup Plan", span: 4 }, // 2 fields × 2
+      { label: "", span: 6 }, // MTDL + Comment + RPO + Comment + Additional Info + Comment
+      { label: "User Action & Data Status", span: 3 } // Actions + Status + Last Edit
+    ];
+
+    // Build merge ranges
+    spans.forEach((item, index) => {
+      if (currentColumn <= totalColumns) {
+        const endColumn = Math.min(currentColumn + item.span - 1, totalColumns);
+        merges.push({
+          label: item.label,
+          start: currentColumn,
+          end: endColumn,
+          color: index === 1 ? "FF6495ED" : // Disruption Impact (cornflowerblue)
+            index === 3 ? "FF87D511" : // Critical Activities - Resources (rgb(135, 213, 17))
+              index === 4 ? "FFFFA500" : // Current Status of Backup Plan (orange)
+                index === 6 ? "FFFF4500" : // User Action & Data Status (orangered)
+                  undefined
+        });
+        currentColumn = endColumn + 1;
+      }
+    });
+
+    // Apply merges and labels
+    merges.forEach((merge) => {
+      if (merge.start <= totalColumns && merge.end <= totalColumns && merge.start <= merge.end) {
+        if (merge.label) {
+          groupRow.getCell(merge.start).value = merge.label;
+          if (merge.color) {
+            groupRow.getCell(merge.start).fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: merge.color }
+            };
+          }
+        }
+        worksheet.mergeCells(`${getColumnLetter(merge.start)}${groupRow.number}:${getColumnLetter(merge.end)}${groupRow.number}`);
+      }
+    });
+
+    groupRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    // --- Row 2: Old headers ---
+    const headerRow = worksheet.addRow([
+      "S.No",
+      ...fields.flatMap(field => [field.label, `${field.label} Comments`]),
+      "Actions",
+      "Status",
+      "Last Edit"
+    ]);
+
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
 
     // Format comments array
     const formatComments = (arr) =>
@@ -229,7 +355,8 @@ export default function Page() {
         }
       });
 
-      rowData.status = row.currentStatus;
+      rowData.actions = row.actions || "";
+      rowData.status = row.currentStatus || "";
       rowData.lastEdit = row.lastEditedBy
         ? `${row.lastEditedBy.email}, ${row.lastEditedBy.date}, ${row.lastEditedBy.time}`
         : "Not Edited Yet";
@@ -237,12 +364,17 @@ export default function Page() {
       worksheet.addRow(rowData);
     });
 
-    // Apply wrapping style to all cells
-    worksheet.eachRow((row) => {
+    // Apply wrapping style to data rows only (starting from row 3)
+    const dataRows = worksheet.getRows(3, baseRows.length || 0);
+    dataRows.forEach((row) => {
       row.eachCell((cell) => {
         cell.alignment = { wrapText: true, vertical: "top" };
       });
     });
+
+    // Debug: Log fields and merges for verification
+    console.log("fields.length:", fields.length, "totalColumns:", totalColumns);
+    console.log("Merges:", merges);
 
     // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
@@ -295,25 +427,69 @@ export default function Page() {
 
   const handleSubmit = async (row) => {
     const fields = getFields();
-    const isEmpty = fields.some(f => !String(row[f.name]?.value || "").trim());
+
+    // --- Custom validation ---
+    const isEmpty = fields.some(f => {
+      const value = row[f.name]?.value;
+
+      if (f.name === "Impact To Company") {
+        return false; // always auto-filled
+      }
+
+      if (f.name === "Time From Start Of Incident") {
+        return false; // always auto-filled
+      }
+
+      if (f.name === "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)") {
+        // must have all 4 justifications filled
+        if (!Array.isArray(value)) return true;
+        return value.some(v => !String(v || "").trim());
+      }
+
+      // default check for other fields
+      return !String(value || "").trim();
+    });
+
     if (isEmpty) return alert("Please fill all fields before submitting.");
 
     const token = localStorage.getItem("auth-token");
 
-    // Flatten form data before sending
+    // --- Flatten form data ---
     const formData = {};
     fields.forEach(f => {
       const fieldData = row[f.name] || {};
       let value = fieldData.value;
 
-      if (value && typeof value === "object" && "value" in value) {
-        value = value.value; // flatten nested values
+      // Impact To Company
+      if (f.name === "Impact To Company") {
+        value = Array.isArray(value) ? value : ["Minor", "Minor", "Minor", "Minor"];
+        formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
+        return;
       }
 
-      formData[sanitize(f.name)] = {
-        value: value || "",
-        comments: fieldData.comments || []
-      };
+      // Justification
+      if (f.name === "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)") {
+        value = Array.isArray(value) ? value : ["", "", "", ""];
+        formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
+        return;
+      }
+
+      // Time From Start Of Incident
+      if (f.name === "Time From Start Of Incident") {
+        value = ["First 24 Hours", "24 - 48 Hours", "Up to 1 Week", "Up to 2 Weeks"];
+        formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
+        return;
+      }
+
+      // Default
+      if (f.type === "impactDropdowns" && Array.isArray(value)) {
+        formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
+      } else {
+        if (value && typeof value === "object" && "value" in value) {
+          value = value.value;
+        }
+        formData[sanitize(f.name)] = { value: value || "", comments: fieldData.comments || [] };
+      }
     });
 
     // --- Status logic ---
@@ -321,14 +497,11 @@ export default function Page() {
     const isSuperAdmin = requiredData.role === "super admin";
 
     if (!row.dataId && isSuperAdmin) {
-      // ✅ New record created by Super Admin
       statusForSubmit = "Data Created By Super Admin";
     } else if (!row.dataId) {
-      // ✅ New record created by normal user
       statusForSubmit = "Pending for Owner Approval";
     } else {
-      // ✅ Editing existing record
-      statusForSubmit = row.currentStatus; // keep whatever status it already had
+      statusForSubmit = row.currentStatus;
     }
 
     const payload = {
@@ -714,6 +887,77 @@ export default function Page() {
   };
 
 
+  const handleImpactDropdownChange = (rowId, index, value) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.id === rowId) {
+          const currentValue = row["Impact To Company"]?.value || ["Minor", "Minor", "Minor", "Minor"];
+          const updatedValue = [...currentValue];
+          updatedValue[index] = value;
+          return {
+            ...row,
+            "Impact To Company": {
+              value: updatedValue,
+              comments: row["Impact To Company"]?.comments || []
+            }
+          };
+        }
+        return row;
+      })
+    );
+  };
+
+  const handleJustificationInputChange = (rowId, index, value) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.id === rowId) {
+          const currentValue = Array.isArray(row["Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)"]?.value)
+            ? row["Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)"].value
+            : ["", "", "", ""];
+
+          const updatedValue = [...currentValue];
+          updatedValue[index] = value;
+
+          return {
+            ...row,
+            "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)": {
+              value: updatedValue,
+              comments: row["Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)"]?.comments || []
+            }
+          };
+        }
+        return row;
+      })
+    );
+  };
+
+  const handleKeyFunctionChange = (rowId, index, value) => {
+    setRows(prevRows =>
+      prevRows.map(row => {
+        if (row.id === rowId) {
+          const currentValue = Array.isArray(row["Key Function / Service"]?.value)
+            ? row["Key Function / Service"].value
+            : ["", "Function Description & Critical Acitivities", ""];
+
+          const updatedValue = [...currentValue];
+          updatedValue[index] = value;
+
+          return {
+            ...row,
+            "Key Function / Service": {
+              value: updatedValue,
+              comments: row["Key Function / Service"]?.comments || []
+            }
+          };
+        }
+        return row;
+      })
+    );
+  };
+
+
+
+
 
 
   return (
@@ -816,6 +1060,52 @@ export default function Page() {
         )}
         <table>
           <thead>
+            {/* <tr>
+              <th colSpan={3}></th>
+              <th colSpan={4} style={{ backgroundColor: 'cornflowerblue' }}>Disruption Impact</th>
+              <th colSpan={2}></th>
+              <th colSpan={5} style={{ backgroundColor: 'rgb(135, 213, 17)' }}>Critical Activites - Resources</th>
+              <th colSpan={2} style={{ backgroundColor: 'orange' }}>Current Status of Backup Plan</th>
+              <th colSpan={3}></th>
+              <th colSpan={3} style={{ backgroundColor: 'orangered' }}>User Action & Data Status</th>
+            </tr> */}
+            <tr>
+              {Object.entries(columnGroups).map(([group, fields]) => {
+                // Count how many of this group's fields exist in getFields()
+                const count = fields.filter(f =>
+                  f === "S.No" || f === "Actions" || f === "Status" || f === "Last Edit"
+                    ? true // always present
+                    : getFields().some(field => field.name === f)
+                ).length;
+
+                if (count === 0) return null;
+
+                let style = {};
+                if (group === "disruptionImpact") style = { backgroundColor: "cornflowerblue", color: "white" };
+                if (group === "criticalActivities") style = { backgroundColor: "rgb(135, 213, 17)" };
+                if (group === "backupPlan") style = { backgroundColor: "orange" };
+                if (group === "userAction") style = { backgroundColor: "orangered", color: "white" };
+
+                // Blank groups: no background
+                return (
+                  <th key={group} colSpan={count} style={style}>
+                    {group === "blank1" ||
+                      group === "blank2" ||
+                      group === "blank3"
+                      ? "" // render empty header for blank groups
+                      : group === "disruptionImpact"
+                        ? "Disruption Impact"
+                        : group === "criticalActivities"
+                          ? "Critical Activities - Resources"
+                          : group === "backupPlan"
+                            ? "Current Status of Backup Plan"
+                            : group === "userAction"
+                              ? "User Action & Data Status"
+                              : ""}
+                  </th>
+                );
+              })}
+            </tr>
             <tr>
               <th>S.No</th>
               {getFields().map(field => <th key={field.name}>{field.label}</th>)}
@@ -832,11 +1122,44 @@ export default function Page() {
                   <td key={field.name} className={styles.cellWithIcon}>
                     <div style={{ position: "relative", width: "300px" }}
                       onMouseEnter={() => setHoveredField({ rowId: row.id, fieldName: field.name })}
-                      onMouseLeave={() => setHoveredField(null)}
-                    >
-                      {(field.name === "Max. Tolerable Period of Disruption (MTPD)" ||
-                        field.name === "Recovery Time Objective (RTO)") ? (
+                      onMouseLeave={() => setHoveredField(null)}>
 
+                      {/* Special case for Impact To Company */}
+                      {field.name === "Impact To Company" ? (
+                        <div style={{ display: "flex", gap: "10px", flexDirection: 'column' }}>
+                          {(Array.isArray(row[field.name]?.value) ? row[field.name].value : ["Minor", "Minor", "Minor", "Minor"]).map((val, idx) => (
+                            <select
+                              key={idx}
+                              value={val}
+                              onChange={(e) => handleImpactDropdownChange(row.id, idx, e.target.value)}
+                              disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                              className='input-field'
+                            >
+                              <option value="Minor">Minor</option>
+                              <option value="Moderate">Moderate</option>
+                              <option value="Major">Major</option>
+                            </select>
+                          ))}
+                        </div>
+
+                      ) : field.name === "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)" ? (
+                        <div style={{ display: "flex", gap: "10px", flexDirection: 'column' }}>
+                          {(Array.isArray(row[field.name]?.value) ? row[field.name].value : ["", "", "", ""]).map((val, idx) => (
+                            <input
+                              key={idx}
+                              type="text"
+                              value={val}
+                              onChange={(e) => handleJustificationInputChange(row.id, idx, e.target.value)}
+                              disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                              className='input-field'
+                              style={{ width: '100%' }}
+                            />
+                          ))}
+                        </div>
+
+                      ) : (field.name === "Max. Tolerable Period of Disruption (MTPD)" ||
+                        field.name === "Recovery Time Objective (RTO)") ? (
+                        // Existing logic for these two fields
                         <select
                           className="input-field"
                           value={row[field.name]?.value || ""}
@@ -845,58 +1168,85 @@ export default function Page() {
                           style={{ width: "200px" }}
                         >
                           <option value="">Select</option>
-
-                          {field.name === "Max. Tolerable Period of Disruption (MTPD)" && (
-                            <>
-                              <option value="3 Hrs">3 Hrs</option>
-                              <option value="6 Hrs">6 Hrs</option>
-                              <option value="9 Hrs">9 Hrs</option>
-                              <option value="1 day">1 day</option>
-                              <option value="2 day">2 day</option>
-                              <option value="3 day">3 day</option>
-                              <option value="1 week">1 week</option>
-                              <option value="2 week">2 week</option>
-                              <option value="3 week">3 week</option>
-                              <option value="1 month">1 month</option>
-                              <option value="2 month">2 month</option>
-                              <option value="3 month">3 month</option>
-                            </>
-                          )}
-
-                          {field.name === "Recovery Time Objective (RTO)" && (
-                            <>
-                              <option value="3 Hrs">3 Hrs</option>
-                              <option value="6 Hrs">6 Hrs</option>
-                              <option value="9 Hrs">9 Hrs</option>
-                              <option value="1 day">1 day</option>
-                              <option value="2 day">2 day</option>
-                              <option value="3 day">3 day</option>
-                              <option value="1 week">1 week</option>
-                              <option value="2 week">2 week</option>
-                              <option value="3 week">3 week</option>
-                              <option value="1 month">1 month</option>
-                              <option value="2 month">2 month</option>
-                              <option value="3 month">3 month</option>
-                            </>
-                          )}
+                          <option value="3 Hrs">3 Hrs</option>
+                          <option value="6 Hrs">6 Hrs</option>
+                          <option value="9 Hrs">9 Hrs</option>
+                          <option value="1 day">1 day</option>
+                          <option value="2 day">2 day</option>
+                          <option value="3 day">3 day</option>
+                          <option value="1 week">1 week</option>
+                          <option value="2 week">2 week</option>
+                          <option value="3 week">3 week</option>
+                          <option value="1 month">1 month</option>
+                          <option value="2 month">2 month</option>
+                          <option value="3 month">3 month</option>
                         </select>
 
-                      ) : field.type !== "text" ? (
-                        <input
-                          type={field.type}
-                          value={row[field.name]?.value || ""}
-                          onChange={(e) => handleChange(row.id, field.name, e.target.value)}
-                          disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
-                          className="input-field"
-                        />
-                      ) : (
-                        <textarea
-                          className="input-field"
-                          value={row[field.name]?.value || ""}
-                          onChange={(e) => handleChange(row.id, field.name, e.target.value)}
-                          disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
-                        />
-                      )}
+                      ) : field.name === "Key Function / Service" ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          {/* First field */}
+                          <input
+                            type="text"
+                            value={Array.isArray(row[field.name]?.value) ? row[field.name].value[0] : ""}
+                            onChange={(e) => handleKeyFunctionChange(row.id, 0, e.target.value)}
+                            disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                            style={{ width: '100%' }}
+                            className='input-field'
+                          />
+
+                          {/* Second field (fixed value, disabled) */}
+                          <input
+                            type="text"
+                            value="Function Description & Critical Acitivities"
+                            readOnly
+                            disabled
+                            style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed", width: '100%' }}
+                            className='input-field'
+                          />
+
+                          {/* Third field (textarea) */}
+                          <textarea
+                            value={Array.isArray(row[field.name]?.value) ? row[field.name].value[2] : ""}
+                            onChange={(e) => handleKeyFunctionChange(row.id, 2, e.target.value)}
+                            disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                            className='input-field'
+                            style={{ height: '80px' }}
+                          />
+                        </div>
+                      )
+
+                        : field.name === "Time From Start Of Incident" ? (
+                          <div style={{ display: "flex", gap: "10px", flexDirection: 'column' }}>
+                            {["First 24 Hours", "24 - 48 Hours", "Up to 1 Week", "Up to 2 Weeks"].map((val, idx) => (
+                              <input
+                                key={idx}
+                                type="text"
+                                value={val}
+                                style={{ width: '100%', backgroundColor: 'cornflowerblue', color: 'white' }}
+                                className='input-field'
+                                disabled
+                              />
+                            ))}
+                          </div>
+                        )
+
+                          : field.type !== "text" ? (
+                            <input
+                              type={field.type}
+                              value={row[field.name]?.value || ""}
+                              onChange={(e) => handleChange(row.id, field.name, e.target.value)}
+                              disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                              className="input-field"
+                            />
+                          ) : (
+                            <textarea
+                              className="input-field"
+                              value={row[field.name]?.value || ""}
+                              onChange={(e) => handleChange(row.id, field.name, e.target.value)}
+                              disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
+                            />
+                          )}
+
 
                       {/* Comment Tooltip */}
                       {hoveredField?.rowId === row.id &&
@@ -914,7 +1264,7 @@ export default function Page() {
                             zIndex: 10,
                             fontSize: "8px",
                             whiteSpace: "pre-wrap",
-                            textAlign:"left"
+                            textAlign: "left"
                           }}>
                             {row[field.name].comments.map((c, i) => (
                               <div key={i} style={{ marginBottom: "4px" }}>
@@ -936,10 +1286,6 @@ export default function Page() {
                       />
                     </div>
                   </td>
-
-
-
-
                 ))}
                 <td>
                   {!row.submitted && row.editable && requiredData.role === 'champion' && (

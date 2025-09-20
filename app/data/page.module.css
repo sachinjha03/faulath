@@ -189,7 +189,7 @@
 }
 .filter {
   position: relative;
-  z-index: 100;
+  z-index: 200;
 }
 .filterBtn {
   border-radius: 20px;

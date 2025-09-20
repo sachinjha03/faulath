@@ -21,7 +21,7 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import DownloadRAData from '../components/DownloadRAData';
-import { createExcelFile, uploadBackup, getFormattedDate } from '../utils/backupUtils';
+
 
 
 
@@ -57,6 +57,21 @@ export default function Page() {
   const [likelihoodFilter, setLikelihoodFilter] = useState("");
   const [impactFilter, setImpactFilter] = useState("");
   const [controlEffectivenessFilter, setControlEffectivenessFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [riskScoreColorFilter, setRiskScoreColorFilter] = useState("");
+  const [residualRiskColorFilter, setResidualRiskColorFilter] = useState("");
+  const [riskOwnerFilter, setRiskOwnerFilter] = useState("");
+
+  // Dummy mapping of companies to risk owners
+  const companyRiskOwners = {
+    "Foulath": ["Digital Transformation", "Facility Management", "Finance" , "PR Government Relations" , "HR" , "Internal Audit" , "Legal" , "SAP" , "Capex & Opex" , "Consumables" , "ILIC" , "IS"],
+    "Bahrain Steel": ["OA File", "Raw Material" , "Sales & Marketing" , "Shipping"],
+    "Sulb Saudi": ["Sales & Marketing", "Electrical Maintenance", "Logistics", "HR and Administration" , "Mechanical Maintenance" , "Production Planning & Control" , "Quality" , "Rolling Mill & Roll Shop" , "Safety"],
+    "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production" , "Production Planning" , "Quality Assurance" , "Quality Control" , "Safety & Environment" , "Sales & Marketing"],
+  };
+
+
+
 
 
 
@@ -272,169 +287,155 @@ export default function Page() {
     setDisplayLoadingScreen(false);
   };
 
-  // console.log(rawData);
 
   const formatComments = (comments = []) =>
     comments.map(c => `${c.date}: ${c.text}`).join(" | ");
 
-  // Map rows to a format suitable for Excel
-  // .filter(row => row.risks && row.risks.trim() !== "")
-  // const exportToExcel = () => {
-  //   if (!rows || rows.length === 0) return;
-  //   const exportData = rawData
-  //     .map((elem, index) => ({
-  //       "S.No": index + 1,
-  //       "Risks": elem.risks.value,
-  //       "Risks Comment" : formatComments(elem.risks.comments),
-  //       "Definition/Potential Cause": elem.definition.value,
-  //       "Definition Comment" : elem.definition.comments,
-  //       "Category": elem.category.value,
-  //       "Likelihood": elem.likelihood.value,
-  //       "Impact": elem.impact.value,
-  //       "Risk Score": elem.riskScore.value,
-  //       "Existing Control": elem.existingControl.value,
-  //       "Existing Control Comment" : elem.existingControl.comments,
-  //       "Control %": elem.control.value,
-  //       "Residual Risk": elem.residualRisk.value,
-  //       "Mitigation Plan": elem.mitigationPlan.value,
-  //       "Mitigation Plan Comment" : elem.mitigationPlan.comments,
-  //       "Risk Owner": elem.riskOwner.value,
-  //       "Risk Owner Comment" : elem.riskOwner.comments,
-  //       "Status": elem.currentStatus,
-  //       "Last Edit": elem.lastEditedBy
-  //         ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
-  //         : "Not Edited Yet"
-  //     }));
 
-  //     // console.log(exportData);
+const exportToExcel = async () => {
+  if (!rawData || rawData.length === 0) return;
 
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Risk Data");
 
+  // Define column widths
+  worksheet.columns = [
+    { key: "sno", width: 10 }, // S.No (medium width)
+    { key: "risks", width: 30 }, // Risks (wider)
+    { key: "risksComments", width: 40 }, // Risks Comment (wider)
+    { key: "definition", width: 30 }, // Definition/Potential Cause (wider)
+    { key: "definitionComments", width: 40 }, // Definition Comment (wider)
+    { key: "category", width: 15 }, // Category (medium)
+    { key: "likelihood", width: 15 }, // Likelihood (medium)
+    { key: "impact", width: 15 }, // Impact (medium)
+    { key: "riskScore", width: 20 }, // Risk Score (medium)
+    { key: "existingControl", width: 30 }, // Existing Control (wider)
+    { key: "existingControlComments", width: 40 }, // Existing Control Comment (wider)
+    { key: "controlEffectiveness", width: 20 }, // Control Effectiveness (medium)
+    { key: "control", width: 20 }, // Control % (medium)
+    { key: "residualRisk", width: 20 }, // Residual Risk (medium)
+    { key: "treatmentOption", width: 20 }, // Treatment Option (medium)
+    { key: "mitigationPlan", width: 30 }, // Mitigation Plan (wider)
+    { key: "mitigationPlanComments", width: 40 }, // Mitigation Plan Comment (wider)
+    { key: "riskOwner", width: 30 }, // Risk Owner (wider)
+    { key: "riskOwnerComments", width: 40 }, // Risk Owner Comment (wider)
+    { key: "status", width: 20 }, // Status (medium)
+    { key: "lastEdit", width: 20 }, // Last Edit (medium)
+  ];
 
-  //   // Create a worksheet
-  //   const worksheet = XLSX.utils.json_to_sheet(exportData);
-  //   const workbook = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Risk Data");
+  // --- Row 1: Add grouped header row (merged) ---
+  const groupRow = worksheet.addRow([
+    "Risk Identification", "", "", "", "", "",
+    "Risk Analysis", "", "", "", "", "", "",
+    "Risk Evaluation",
+    "Risk Treatment", "", "",
+    "Risk Owner", "",
+    "Data Status", ""
+  ]);
 
-  //   // --- Column Widths ---
-  //   worksheet['!cols'] = [
-  //     { wch: 6 },   // S.No
-  //     { wch: 40 },  // Risks
-  //     { wch: 40 },  // Risks Comment
-  //     { wch: 40 },  // Definition
-  //     { wch: 40 },  // Definition Comment
-  //     { wch: 15 },  // Category
-  //     { wch: 12 },  // Likelihood
-  //     { wch: 12 },  // Impact
-  //     { wch: 12 },  // Risk Score
-  //     { wch: 40 },  // Existing Control
-  //     { wch: 40 },  // Existing Control Comment
-  //     { wch: 12 },  // Control %
-  //     { wch: 15 },  // Residual Risk
-  //     { wch: 40 },  // Mitigation Plan
-  //     { wch: 40 },  // Mitigation Plan Comment
-  //     { wch: 40 },  // Risk Owner
-  //     { wch: 40 },  // Risk Owner Comment
-  //     { wch: 35 },  // Status
-  //     { wch: 40 }   // Last Edit
-  //   ];
+  // Adjusted merges based on specified column spans
+  worksheet.mergeCells(`A${groupRow.number}:F${groupRow.number}`); // Risk Identification (A-F: S.No, Risks, Risks Comment, Definition, Definition Comment, Category)
+  worksheet.mergeCells(`G${groupRow.number}:M${groupRow.number}`); // Risk Analysis (G-M: Likelihood, Impact, Risk Score, Existing Control, Existing Control Comment, Control Effectiveness, Control %)
+  worksheet.mergeCells(`N${groupRow.number}:N${groupRow.number}`); // Risk Evaluation (N: Residual Risk)
+  worksheet.mergeCells(`O${groupRow.number}:Q${groupRow.number}`); // Risk Treatment (O-Q: Treatment Option, Mitigation Plan, Mitigation Plan Comment)
+  worksheet.mergeCells(`R${groupRow.number}:S${groupRow.number}`); // Risk Owner (R-S: Risk Owner, Risk Owner Comment)
+  worksheet.mergeCells(`T${groupRow.number}:U${groupRow.number}`); // Data Status (T-U: Status, Last Edit)
 
-  //   Object.keys(worksheet).forEach((cell) => {
-  //   if (cell[0] === "!") return; // skip meta keys
-  //   if (!worksheet[cell].s) worksheet[cell].s = {};
-  //   worksheet[cell].s.alignment = { wrapText: true, vertical: "top" };
-  // });
+  // Apply background colors to the first cell of each merged section
+  groupRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "37D92B" } }; // Risk Identification
+  groupRow.getCell(7).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } }; // Risk Analysis
+  groupRow.getCell(14).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "3C9DEC" } }; // Risk Evaluation
+  groupRow.getCell(15).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "E819B1" } }; // Risk Treatment
+  groupRow.getCell(18).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "56C4F4" } }; // Risk Owner
+  groupRow.getCell(20).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF8C00" } }; // Data Status
 
-  //   // Write workbook and save
-  //   const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  //   const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  //   saveAs(data, "RiskData.xlsx");
-  // };
+  groupRow.eachCell(cell => {
+    cell.font = { bold: true };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
 
+  // --- Row 2: Normal headers ---
+  const headerRow = worksheet.addRow([
+    "S.No",
+    "Risks",
+    "Risks Comment",
+    "Definition/Potential Cause",
+    "Definition Comment",
+    "Category",
+    "Likelihood",
+    "Impact",
+    "Risk Score",
+    "Existing Control",
+    "Existing Control Comment",
+    "Control Effectiveness",
+    "Control %",
+    "Residual Risk",
+    "Treatment Option",
+    "Mitigation Plan",
+    "Mitigation Plan Comment",
+    "Risk Owner",
+    "Risk Owner Comment",
+    "Status",
+    "Last Edit"
+  ]);
 
-  const exportToExcel = async () => {
-    if (!rows || rows.length === 0) return;
+  headerRow.eachCell(cell => {
+    cell.font = { bold: true };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  });
 
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Risk Data");
+  // Helper function to format comments
+  const formatComments = (arr) =>
+    (arr || [])
+      .map(
+        (c) =>
+          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+            c.date
+          ).toLocaleTimeString()}] ${c.text}`
+      )
+      .join("\n");
 
-    // Define headers
-    worksheet.columns = [
-      { header: "S.No", key: "sno", width: 6 },
-      { header: "Risks", key: "risks", width: 40 },
-      { header: "Risks Comment", key: "risksComments", width: 40 },
-      { header: "Definition/Potential Cause", key: "definition", width: 40 },
-      { header: "Definition Comment", key: "definitionComments", width: 40 },
-      { header: "Category", key: "category", width: 15 },
-      { header: "Likelihood", key: "likelihood", width: 12 },
-      { header: "Impact", key: "impact", width: 12 },
-      { header: "Risk Score", key: "riskScore", width: 12 },
-      { header: "Existing Control", key: "existingControl", width: 40 },
-      { header: "Existing Control Comment", key: "existingControlComments", width: 40 },
-      { header: "Control Effectiveness", key: "controlEffectiveness", width: 15 },
-      { header: "Control %", key: "control", width: 12 },
-      { header: "Residual Risk", key: "residualRisk", width: 15 },
-      { header: "Treatment Option", key: "treatmentOption", width: 15 },
-      { header: "Mitigation Plan", key: "mitigationPlan", width: 40 },
-      { header: "Mitigation Plan Comment", key: "mitigationPlanComments", width: 40 },
-      { header: "Risk Owner", key: "riskOwner", width: 40 },
-      { header: "Risk Owner Comment", key: "riskOwnerComments", width: 40 },
-      { header: "Status", key: "status", width: 35 },
-      { header: "Last Edit", key: "lastEdit", width: 40 },
-    ];
+  // --- Add data rows as arrays to match header order ---
+  rawData.forEach((elem, index) => {
+    worksheet.addRow([
+      index + 1,
+      elem.risks?.value || "",
+      formatComments(elem.risks?.comments),
+      elem.definition?.value || "",
+      formatComments(elem.definition?.comments),
+      elem.category?.value || "",
+      elem.likelihood?.value || "",
+      elem.impact?.value || "",
+      elem.riskScore?.value || "",
+      elem.existingControl?.value || "",
+      formatComments(elem.existingControl?.comments),
+      elem.controlEffectiveness?.value || "",
+      elem.control?.value || "",
+      elem.residualRisk?.value || "",
+      elem.treatmentOption?.value || "",
+      elem.mitigationPlan?.value || "",
+      formatComments(elem.mitigationPlan?.comments),
+      elem.riskOwner?.value || "",
+      formatComments(elem.riskOwner?.comments),
+      elem.currentStatus || "",
+      elem.lastEditedBy
+        ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
+        : "Not Edited Yet"
+    ]);
+  });
 
-    // Function to format comments array
-    const formatComments = (arr) =>
-      (arr || [])
-        .map(
-          (c) =>
-            `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
-              c.date
-            ).toLocaleTimeString()}] ${c.text}`
-        )
-        .join("\n");
-
-    // Add rows
-    rawData.forEach((elem, index) => {
-      worksheet.addRow({
-        sno: index + 1,
-        risks: elem.risks.value,
-        risksComments: formatComments(elem.risks.comments),
-        definition: elem.definition.value,
-        definitionComments: formatComments(elem.definition.comments),
-        category: elem.category.value,
-        likelihood: elem.likelihood.value,
-        impact: elem.impact.value,
-        riskScore: elem.riskScore.value,
-        existingControl: elem.existingControl.value,
-        existingControlComments: formatComments(elem.existingControl.comments),
-        controlEffectiveness: elem.controlEffectiveness.value,
-        controlEffectivenessComments: formatComments(elem.controlEffectiveness.comments),
-        control: elem.control.value,
-        residualRisk: elem.residualRisk.value,
-        treatmentOption: elem.treatmentOption.value,
-        treatmentOption: formatComments(elem.treatmentOption.comments),
-        mitigationPlan: elem.mitigationPlan.value,
-        mitigationPlanComments: formatComments(elem.mitigationPlan.comments),
-        riskOwner: elem.riskOwner.value,
-        riskOwnerComments: formatComments(elem.riskOwner.comments),
-        status: elem.currentStatus,
-        lastEdit: elem.lastEditedBy
-          ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
-          : "Not Edited Yet",
-      });
+  // Apply wrapping and top alignment only to data rows (starting from row 3)
+  const dataRows = worksheet.getRows(3, rawData.length || 0);
+  dataRows.forEach((row) => {
+    row.eachCell((cell) => {
+      cell.alignment = { wrapText: true, vertical: "top" };
     });
+  });
 
-    // Apply wrapping style to all cells
-    worksheet.eachRow((row) => {
-      row.eachCell((cell) => {
-        cell.alignment = { wrapText: true, vertical: "top" };
-      });
-    });
-
-    // Generate Excel file
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), "RiskData.xlsx");
-  };
+  // Export file
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), "RiskData.xlsx");
+};
 
 
 
@@ -957,22 +958,35 @@ export default function Page() {
       controlEffectivenessFilter === "" ||
       row.controlEffectiveness === controlEffectivenessFilter;
 
-    return likelihoodMatch && impactMatch && controlEffectivenessMatch;
+    const categoryMatch =
+      categoryFilter === "" ||
+      row.category === categoryFilter;
+
+    const riskScoreColorMatch =
+      riskScoreColorFilter === "" ||
+      (riskScoreColorFilter === "green" && row.riskScore >= 1 && row.riskScore <= 2) ||
+      (riskScoreColorFilter === "yellow" && row.riskScore >= 3 && row.riskScore <= 9) ||
+      (riskScoreColorFilter === "red" && row.riskScore >= 10);
+
+    const residualRiskColorMatch =
+      residualRiskColorFilter === "" ||
+      (residualRiskColorFilter === "green" && row.residualRisk >= 1 && row.residualRisk <= 2) ||
+      (residualRiskColorFilter === "yellow" && row.residualRisk >= 3 && row.residualRisk <= 5) ||
+      (residualRiskColorFilter === "red" && row.residualRisk >= 6);
+
+    const riskOwnerMatch =
+      riskOwnerFilter === "" || row.riskOwner === riskOwnerFilter;
+
+    return (
+      likelihoodMatch &&
+      impactMatch &&
+      controlEffectivenessMatch &&
+      categoryMatch &&
+      riskScoreColorMatch &&
+      residualRiskColorMatch &&
+      riskOwnerMatch
+    );
   });
-
-
-  const { backendURL } = useContext(MyContext);
-
-  const handleBackupButtonClick = async () => {
-    try {
-      const { buffer, fileName } = await createExcelFile(rawData);
-      await uploadBackup(buffer, fileName, backendURL);
-      alert("Backup uploaded successfully!");
-    } catch (error) {
-      console.error(error);
-      alert("Backup failed: " + error.message);
-    }
-  };
 
 
 
@@ -1021,7 +1035,7 @@ export default function Page() {
       </div>
       <div className={styles.dataPageTop}>
         <div className={styles.dataPageTopLeft}>
-          <h3>{requiredData.company} : {requiredData.department} {requiredData.department == "RA" ? "(Risk Assessment)" : "(Business Impact Analysis)"}</h3>
+          <h3>{requiredData.company} : {requiredData.department} {requiredData.department == "RA" ? "(Risk Assessment Register)" : "(Business Impact Analysis)"}</h3>
           <h4>Logged In As : {requiredData.role}</h4>
         </div>
         <div className={styles.dataPageTopRight}>
@@ -1037,31 +1051,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="data-page-top-middle">
-          <table className="risk-table">
-            <thead>
-              <tr>
-                <th colSpan={2}>Legend</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span className="color-box green"></span></td>
-                <td>Low Risk</td>
-              </tr>
-              <tr>
-                <td><span className="color-box orange"></span></td>
-                <td>Medium Risk</td>
-              </tr>
-              <tr>
-                <td><span className="color-box red"></span></td>
-                <td>High Risk</td>
-              </tr>
-            </tbody>
-          </table>
 
-
-        </div>
 
       <div className={styles.featureRow}>
         <div className={styles.featureRowLeft}>
@@ -1096,6 +1086,37 @@ export default function Page() {
           </button>
         </div>
       </div>
+      <div className="data-page-top-middle">
+        <table className="risk-table">
+          <thead>
+            <tr>
+              <th colSpan={2}>Legend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span className="color-box green"></span></td>
+              <td>Low Risk</td>
+            </tr>
+            <tr>
+              <td><span className="color-box orange"></span></td>
+              <td>Medium Risk</td>
+            </tr>
+            <tr>
+              <td><span className="color-box red"></span></td>
+              <td>High Risk</td>
+            </tr>
+          </tbody>
+        </table>
+        <table className='horizontal-table'>
+          <tr>
+            <td colSpan={2}>Legend</td>
+            <td><span className="color-box green"></span>Low Risk</td>
+            <td><span className="color-box orange"></span>Medium Risk</td>
+            <td><span className="color-box red"></span>High Risk</td>
+          </tr>
+        </table>
+      </div>
       <div className={styles.dataPageBottom}>
         {displayLoadingScreen && <div className={styles.loadingScreen}>
           <h3>Loading Data...</h3>
@@ -1114,7 +1135,27 @@ export default function Page() {
               <th>#S.No</th>
               <th>Risks</th>
               <th>Definition/Potential Cause</th>
-              <th>Category</th>
+              {/* <th>Category</th> */}
+              <th>
+                Category<br />
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  <option value="operational">Operational</option>
+                  <option value="financial">Financial</option>
+                  <option value="reputational">Reputational</option>
+                  <option value="environmental">Environmental</option>
+                  <option value="business">Business</option>
+                  <option value="infrastructure">Infrastructure</option>
+                  <option value="technological">Technological</option>
+                  <option value="hsse">HSSE</option>
+                  <option value="hse">HSE</option>
+                  <option value="other">Other</option>
+                </select>
+              </th>
               <th>
                 Likelihood<br />
                 <select
@@ -1141,7 +1182,23 @@ export default function Page() {
                   ))}
                 </select>
               </th>
-              <th>Risk Score</th>
+              {/* <th>Risk Score</th> */}
+              <th>
+                Risk Score<br />
+                <select
+                  value={riskScoreColorFilter}
+                  onChange={(e) => setRiskScoreColorFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  <option value="green">🟩</option>
+                  <option value="yellow">🟨</option>
+                  <option value="red">🟥</option>
+                </select>
+              </th>
+
+
+
               <th>Existing Control</th>
               <th>
                 Control Effectiveness<br />
@@ -1159,10 +1216,38 @@ export default function Page() {
               </th>
 
               <th>Control %</th>
-              <th>Residual Risk</th>
+              {/* <th>Residual Risk</th> */}
+              <th>
+                Residual Risk<br />
+                <select
+                  value={residualRiskColorFilter}
+                  onChange={(e) => setResidualRiskColorFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  <option value="green">🟩</option>
+                  <option value="yellow">🟨</option>
+                  <option value="red">🟥</option>
+                </select>
+              </th>
+
               <th>Treatment Option</th>
               <th>Mitigation Plan</th>
-              <th>Risk Owner</th>
+              {/* <th>Risk Owner</th> */}
+              <th>
+                Risk Owner <br />
+                <select
+                  value={riskOwnerFilter}
+                  onChange={(e) => setRiskOwnerFilter(e.target.value)}
+                  className="filter-dropdown"
+                >
+                  <option value="">All</option>
+                  {(companyRiskOwners[requiredData.company] || []).map((owner, i) => (
+                    <option key={i} value={owner}>{owner}</option>
+                  ))}
+                </select>
+              </th>
+
               <th>Actions</th>
               <th>Status</th>
               <th>Last Edit</th>
@@ -1342,7 +1427,7 @@ export default function Page() {
 
 
                 {/* Residual Risk */}
-                <td>
+                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <= 5 ? "#FFFF00" : "#FF0000", position: "relative" }}>
                   <input
                     type="number"
                     className="input-field"

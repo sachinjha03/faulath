@@ -43,6 +43,7 @@ export default function Home() {
       <Navbar/>
       {/* <h1>BCM</h1>
       <h2>Business Continuity Management</h2> */}
+      <img src="/foulath-logo.png" alt="" className={styles.foulathLogo} />
       <img src="/BCM.png" alt="" className={styles.bcmLogo} />
       <p>Resilience in <span>Action</span>, Continuity by <span>Design</span></p>
       <button className={`btn-a filled-btn ${styles.btnA}`} onClick={handleAuthentication}>Begin</button>
