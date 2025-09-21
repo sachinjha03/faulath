@@ -64,7 +64,7 @@ export default function Page() {
 
   // Dummy mapping of companies to risk owners
   const companyRiskOwners = {
-    "Foulath": ["Digital Transformation", "Facility Management", "Finance" , "PR Government Relations" , "HR" , "Internal Audit" , "Legal" , "SAP" , "Capex & Opex" , "Consumables" , "ILIC" , "IS"],
+    "Foulath": ["Digital Transformation", "Facility Management", "Finance" , "PR Government Relations" , "HR" , "Internal Audit" , "Legal" , "SAP" , "Capex & Opex" , "Consumables" , "ILIC" , "IS" , "IT"],
     "Bahrain Steel": ["OA File", "Raw Material" , "Sales & Marketing" , "Shipping"],
     "Sulb Saudi": ["Sales & Marketing", "Electrical Maintenance", "Logistics", "HR and Administration" , "Mechanical Maintenance" , "Production Planning & Control" , "Quality" , "Rolling Mill & Roll Shop" , "Safety"],
     "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production" , "Production Planning" , "Quality Assurance" , "Quality Control" , "Safety & Environment" , "Sales & Marketing"],
@@ -1427,7 +1427,7 @@ const exportToExcel = async () => {
 
 
                 {/* Residual Risk */}
-                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <= 5 ? "#FFFF00" : "#FF0000", position: "relative" }}>
+                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <10 ? "#FFFF00" : "#FF0000", position: "relative" }}>
                   <input
                     type="number"
                     className="input-field"
