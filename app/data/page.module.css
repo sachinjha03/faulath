@@ -164,8 +164,8 @@
 }
 
 .dataPageBottom {
-  border: 1px solid gray;
-  padding: 2rem 2rem;
+  /* border: 1px solid gray; */
+  /* padding: 2rem 2rem; */
   overflow-x: auto;
   height: 750px;
   position: relative;
@@ -264,7 +264,7 @@
 }
 .dataPageBottom table thead{
   position: sticky;
-  top: -8%;
+  top: 0%;
   background-color: white;
   z-index: 99;
 }
@@ -495,6 +495,9 @@
   }
   .notificationMessage{
     font-size: 12px;
+  }
+  .dataPageTop{
+    align-items: center;
   }
 }
 @media screen and (max-width:360px) {

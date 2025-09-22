@@ -54,6 +54,9 @@ export default function Page() {
   const [comments, setComments] = useState({});
   const [rawData, setRawData] = useState([])
   const impactOptions = ["Minor", "Moderate", "Major"];
+  const [headerComments, setHeaderComments] = useState({});
+  const [hoveredHeader, setHoveredHeader] = useState(null);
+
 
   const columnGroups = {
     blank1: [
@@ -122,6 +125,55 @@ export default function Page() {
       fetchData(requiredData);
     }
   }, [requiredData]);
+
+  const fetchHeaderComments = async () => {
+    try {
+      const token = localStorage.getItem("auth-token");
+      const res = await fetch(`${MyContextApi.backendURL}/api/header-comment?company=${requiredData.company}&department=${requiredData.department}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const json = await res.json();
+      if (json.success) {
+        const map = {};
+        json.data.forEach(item => {
+          map[item.fieldName] = item.comments;
+        });
+        setHeaderComments(map);
+      }
+    } catch (err) {
+      console.error("Fetch header comments error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchHeaderComments();
+  }, []);
+
+  const addHeaderComment = async (fieldName, text) => {
+    try {
+      const token = localStorage.getItem("auth-token");
+      const res = await fetch(`${MyContextApi.backendURL}/api/header-comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fieldName,
+          text,
+          company: requiredData.company,
+          department: requiredData.department
+        })
+      });
+      const json = await res.json();
+      if (json.success) {
+        fetchHeaderComments(); // refresh
+      }
+    } catch (err) {
+      console.error("Add header comment error:", err);
+    }
+  };
+
 
   // FETCH NOTIFICATIONS
   const fetchNotifications = async () => {
@@ -703,7 +755,12 @@ export default function Page() {
 
   const handleAdminDecision = async (row, decision) => {
     const token = localStorage.getItem("auth-token");
-    const updatedStatus = decision === 'approve'
+     const updatedStatus =
+    requiredData.role === "super admin"
+      ? decision === "approve"
+        ? "Final Approved By Super Admin"
+        : "Rejected By Super Admin"
+      : decision === "approve"
       ? "Final Approved By Admin"
       : "Rejected By Admin";
     const payload = {
@@ -748,6 +805,8 @@ export default function Page() {
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
     if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
+    if (normalized === "final approved by super admin") return styles.rowFinalApproved;
+    if (normalized.startsWith("rejected by super admin")) return styles.rowRejectedAdmin;
     return "";
   };
 
@@ -1059,8 +1118,7 @@ export default function Page() {
           </div>
         )}
         <table>
-          <thead>
-            {/* <tr>
+          {/* <tr>
               <th colSpan={3}></th>
               <th colSpan={4} style={{ backgroundColor: 'cornflowerblue' }}>Disruption Impact</th>
               <th colSpan={2}></th>
@@ -1069,6 +1127,8 @@ export default function Page() {
               <th colSpan={3}></th>
               <th colSpan={3} style={{ backgroundColor: 'orangered' }}>User Action & Data Status</th>
             </tr> */}
+          <thead>
+            {/* First row: grouped headers */}
             <tr>
               {Object.entries(columnGroups).map(([group, fields]) => {
                 // Count how many of this group's fields exist in getFields()
@@ -1086,34 +1146,145 @@ export default function Page() {
                 if (group === "backupPlan") style = { backgroundColor: "orange" };
                 if (group === "userAction") style = { backgroundColor: "orangered", color: "white" };
 
-                // Blank groups: no background
+                const groupLabel =
+                  group === "blank1" || group === "blank2" || group === "blank3"
+                    ? "" // render empty header for blank groups
+                    : group === "disruptionImpact"
+                      ? "Disruption Impact"
+                      : group === "criticalActivities"
+                        ? "Critical Activities - Resources"
+                        : group === "backupPlan"
+                          ? "Current Status of Backup Plan"
+                          : group === "userAction"
+                            ? "User Action & Data Status"
+                            : "";
+
                 return (
-                  <th key={group} colSpan={count} style={style}>
-                    {group === "blank1" ||
-                      group === "blank2" ||
-                      group === "blank3"
-                      ? "" // render empty header for blank groups
-                      : group === "disruptionImpact"
-                        ? "Disruption Impact"
-                        : group === "criticalActivities"
-                          ? "Critical Activities - Resources"
-                          : group === "backupPlan"
-                            ? "Current Status of Backup Plan"
-                            : group === "userAction"
-                              ? "User Action & Data Status"
-                              : ""}
+                  <th
+                    key={group}
+                    colSpan={count}
+                    style={{ ...style, position: "relative" }}
+                    onMouseEnter={() => setHoveredHeader(group)}
+                    onMouseLeave={() => setHoveredHeader(null)}
+                  >
+                    {groupLabel}
+
+                    {/* Tooltip for group header comments */}
+                    {hoveredHeader === group &&
+                      headerComments[group]?.length > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "-20px",
+                            left: "0",
+                            backgroundColor: "orangered",
+                            color: "white",
+                            padding: "6px",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
+                            zIndex: 20,
+                            fontSize: "12px",
+                            whiteSpace: "pre-wrap",
+                            textAlign: "left",
+                            maxWidth: "260px"
+                          }}
+                        >
+                          {headerComments[group].map((c, i) => (
+                            <div key={i} style={{ marginBottom: "4px" }}>
+                              <strong>{c.author?.name || "User"}:</strong> {c.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                    {/* Add Comment Icon */}
+                    {groupLabel && (
+                      <AddCommentIcon
+                        style={{
+                          position: "absolute",
+                          top: 5,
+                          right: 5,
+                          cursor: "pointer",
+                          color: "#1976d2"
+                        }}
+                        onClick={() => {
+                          const text = prompt(`Add comment for ${groupLabel}`);
+                          if (text) addHeaderComment(group, text); // ✅ use group name as fieldName
+                        }}
+                        titleAccess="Add Header Comment"
+                      />
+                    )}
                   </th>
                 );
               })}
             </tr>
+
+            {/* Second row: actual field headers with comments */}
             <tr>
               <th>S.No</th>
-              {getFields().map(field => <th key={field.name}>{field.label}</th>)}
+              {getFields().map(field => (
+                <th
+                  key={field.name}
+                  style={{ position: "relative" }}
+                  onMouseEnter={() => setHoveredHeader(field.name)}
+                  onMouseLeave={() => setHoveredHeader(null)}
+                >
+                  {field.label}
+
+                  {/* Tooltip for header comments */}
+                  {hoveredHeader === field.name &&
+                    headerComments[field.name]?.length > 0 && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-30px",
+                          left: "0",
+                          backgroundColor: "orangered",
+                          color: "white",
+                          padding: "6px",
+                          border: "1px solid #ccc",
+                          borderRadius: "4px",
+                          boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
+                          zIndex: 20,
+                          fontSize: "12px",
+                          whiteSpace: "pre-wrap",
+                          textAlign: "left",
+                          maxWidth: "260px"
+                        }}
+                      >
+                        {headerComments[field.name].map((c, i) => (
+                          <div key={i} style={{ marginBottom: "4px" }}>
+                            <strong>{c.author?.name || "User"}:</strong> {c.text}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                  {/* Add Comment Icon */}
+                  <AddCommentIcon
+                    style={{
+                      position: "absolute",
+                      top: 5,
+                      right: 5,
+                      cursor: "pointer",
+                      color: "#1976d2"
+                    }}
+                    onClick={() => {
+                      const text = prompt(`Add comment for ${field.label}`);
+                      if (text) addHeaderComment(field.name, text);
+                    }}
+                    titleAccess="Add Header Comment"
+                  />
+                </th>
+              ))}
               <th>Actions</th>
               <th>Status</th>
               <th>Last Edit</th>
             </tr>
           </thead>
+
+
           <tbody>
             {rows.map((row, index) => (
               <tr key={row.id} className={getRowStatusClass(row.currentStatus)}>
@@ -1256,13 +1427,14 @@ export default function Page() {
                             position: "absolute",
                             top: "-50px",
                             left: "0",
-                            backgroundColor: "#f5f5f5",
+                            backgroundColor: "yellowgreen",
+                            color: "white",
                             padding: "5px",
                             border: "1px solid #ccc",
                             borderRadius: "4px",
                             boxShadow: "0px 2px 5px rgba(0,0,0,0.2)",
                             zIndex: 10,
-                            fontSize: "8px",
+                            fontSize: "12px",
                             whiteSpace: "pre-wrap",
                             textAlign: "left"
                           }}>

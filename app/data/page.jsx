@@ -449,6 +449,9 @@ const exportToExcel = async () => {
     if (normalized === "final approved by admin") return styles.rowFinalApproved;
     if (normalized.startsWith("rejected by owner")) return styles.rowRejectedOwner;
     if (normalized.startsWith("rejected by admin")) return styles.rowRejectedAdmin;
+    if (normalized === "final approved by super admin") return styles.rowFinalApproved;
+    if (normalized.startsWith("rejected by super admin")) return styles.rowRejectedAdmin;
+
     // if (normalized === "data created by super admin") return styles.rowCreatedBySuperAdmin;
     return "";
   };
@@ -579,37 +582,41 @@ const exportToExcel = async () => {
       return;
     }
     const payload = {
-      risks: row.risks,
-      definition: row.definition,
-      category: row.category,
-      likelihood: Number(row.likelihood),
-      impact: Number(row.impact),
-      riskScore: row.riskScore,
-      existingControl: row.existingControl,
-      controlEffectiveness: row.controlEffectiveness,
-      control: Number(row.control),
-      residualRisk: row.residualRisk,
-      treatmentOption: row.treatmentOption,
-      mitigationPlan: row.mitigationPlan,
-      riskOwner: row.riskOwner,
-      approvedBy: "",
-      finalApprovedBy: "",
-      currentStatus: requiredData.role === "super admin"
-        ? "Data Created By Super Admin"   // 👈 Directly approved
-        : "Pending for Owner Approval",      // 👈 Default flow for others
-      company: requiredData.company,
-      ...(row.dataId
-        ? {
-          lastEditedBy: { email: requiredData.email },
-          userId: row.userId,
-          createdBy: row.createdBy
-        }
-        : {
-          createdBy: requiredData.email,
-          userId: requiredData.userId,
-          lastEditedBy: null
-        })
-    };
+  risks: row.risks,
+  definition: row.definition,
+  category: row.category,
+  likelihood: Number(row.likelihood),
+  impact: Number(row.impact),
+  riskScore: row.riskScore,
+  existingControl: row.existingControl,
+  controlEffectiveness: row.controlEffectiveness,
+  control: Number(row.control),
+  residualRisk: row.residualRisk,
+  treatmentOption: row.treatmentOption,
+  mitigationPlan: row.mitigationPlan,
+  riskOwner: row.riskOwner,
+  approvedBy: "",
+  finalApprovedBy: "",
+  company: requiredData.company,
+  ...(row.dataId
+    ? {
+        // For updates
+        lastEditedBy: { email: requiredData.email },
+        userId: row.userId,
+        createdBy: row.createdBy,
+        currentStatus: row.currentStatus, // 👈 preserve existing status
+      }
+    : {
+        // For new entries
+        createdBy: requiredData.email,
+        userId: row.userId,
+        lastEditedBy: null,
+        currentStatus: requiredData.role === "super admin"
+          ? "Data Created By Super Admin"
+          : "Pending for Owner Approval",
+      })
+};
+
 
 
     setLoading(true)
@@ -748,42 +755,55 @@ const exportToExcel = async () => {
   };
 
   const handleAdminDecision = async (row, decision) => {
-    const token = localStorage.getItem("auth-token");
-    const updatedStatus = decision === 'approve'
+  const token = localStorage.getItem("auth-token");
+
+  // Determine updatedStatus based on role
+  const updatedStatus =
+    requiredData.role === "super admin"
+      ? decision === "approve"
+        ? "Final Approved By Super Admin"
+        : "Rejected By Super Admin"
+      : decision === "approve"
       ? "Final Approved By Admin"
       : "Rejected By Admin";
-    const payload = {
-      currentStatus: updatedStatus,
-      lastEditedBy: requiredData.email
-    };
-    if (decision === 'approve') {
-      payload.finalApprovedBy = requiredData.email;
-    }
-    try {
-      const response = await fetch(`${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`, {
+
+  const payload = {
+    currentStatus: updatedStatus,
+    lastEditedBy: requiredData.email,
+  };
+
+  // Only set finalApprovedBy if approved
+  if (decision === "approve") {
+    payload.finalApprovedBy = requiredData.email;
+  }
+
+  try {
+    const response = await fetch(
+      `${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`,
+      {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      });
-      const json = await response.json();
-      if (json.success) {
-        setRows(prev =>
-          prev.map(r =>
-            r.id === row.id
-              ? { ...r, currentStatus: updatedStatus }
-              : r
-          )
-        );
-      } else {
-        alert("Failed to update final approval status.");
       }
-    } catch (err) {
-      alert("Error occurred during final approval.");
+    );
+    const json = await response.json();
+    if (json.success) {
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === row.id ? { ...r, currentStatus: updatedStatus } : r
+        )
+      );
+    } else {
+      alert("Failed to update final approval status.");
     }
-  };
+  } catch (err) {
+    alert("Error occurred during final approval.");
+  }
+};
+
 
 
 
@@ -1608,12 +1628,6 @@ const exportToExcel = async () => {
                   {requiredData.role === "super admin" &&
                     row.currentStatus === "Data Created By Super Admin" && (
                       <>
-                        {/* <button
-                          className={`btn-a ${styles.editBtn}`}
-                          onClick={() => enableEdit(row.id)}
-                        >
-                          {editButton[row.id] || "Edit"}
-                        </button> */}
                         <button
                           className={`btn-a ${styles.failBtn}`}
                           onClick={() => displaySuccessScreen(row.id)}
