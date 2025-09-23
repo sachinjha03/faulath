@@ -296,8 +296,9 @@
   border: 1px solid rgb(175, 175, 175);
 }
 .dataPageBottom table td input[type="number"] {
-  width: 50px;
+  width: 80px;
   border: 1px solid rgb(175, 175, 175);
+  text-align: center;
 }
 .dataPageBottom table td select {
   position: relative;

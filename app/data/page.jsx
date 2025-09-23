@@ -1447,7 +1447,7 @@ const exportToExcel = async () => {
 
 
                 {/* Residual Risk */}
-                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <10 ? "#FFFF00" : "#FF0000", position: "relative" }}>
+                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <10 ? "#FFFF00" : "#FF0000", position: "relative"  }}>
                   <input
                     type="number"
                     className="input-field"
