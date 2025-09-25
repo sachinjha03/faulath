@@ -602,14 +602,14 @@ const exportToExcel = async () => {
     ? {
         // For updates
         lastEditedBy: { email: requiredData.email },
-        userId: row.userId,
+        userId: requiredData.userId,
         createdBy: row.createdBy,
         currentStatus: row.currentStatus, // 👈 preserve existing status
       }
     : {
         // For new entries
         createdBy: requiredData.email,
-        userId: row.userId,
+        userId: requiredData.userId,
         lastEditedBy: null,
         currentStatus: requiredData.role === "super admin"
           ? "Data Created By Super Admin"
