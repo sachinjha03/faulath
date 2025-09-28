@@ -22,6 +22,9 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import DownloadBIAData from '../components/DownloadBIAData';
+import Link from 'next/link';
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+
 
 export default function Page() {
   const router = useRouter();
@@ -167,7 +170,7 @@ export default function Page() {
       });
       const json = await res.json();
       if (json.success) {
-        fetchHeaderComments(); // refresh
+        fetchHeaderComments(); 
       }
     } catch (err) {
       console.error("Add header comment error:", err);
@@ -257,7 +260,6 @@ export default function Page() {
           });
         }
 
-        // Ensure all fields exist even if missing in formData
         fields.forEach(f => {
           if (!dynamicRow[f.name]) dynamicRow[f.name] = { value: "", comments: [] };
         });
@@ -345,7 +347,6 @@ export default function Page() {
       }
     });
 
-    // Apply merges and labels
     merges.forEach((merge) => {
       if (merge.start <= totalColumns && merge.end <= totalColumns && merge.start <= merge.end) {
         if (merge.label) {
@@ -367,7 +368,6 @@ export default function Page() {
       cell.alignment = { horizontal: "center", vertical: "middle" };
     });
 
-    // --- Row 2: Old headers ---
     const headerRow = worksheet.addRow([
       "S.No",
       ...fields.flatMap(field => [field.label, `${field.label} Comments`]),
@@ -381,7 +381,6 @@ export default function Page() {
       cell.alignment = { horizontal: "center", vertical: "middle" };
     });
 
-    // Format comments array
     const formatComments = (arr) =>
       (arr || [])
         .map(
@@ -392,7 +391,6 @@ export default function Page() {
         )
         .join("\n");
 
-    // Add data rows
     baseRows.forEach((row, index) => {
       const rowData = { sno: index + 1 };
 
@@ -416,7 +414,6 @@ export default function Page() {
       worksheet.addRow(rowData);
     });
 
-    // Apply wrapping style to data rows only (starting from row 3)
     const dataRows = worksheet.getRows(3, baseRows.length || 0);
     dataRows.forEach((row) => {
       row.eachCell((cell) => {
@@ -424,11 +421,9 @@ export default function Page() {
       });
     });
 
-    // Debug: Log fields and merges for verification
     console.log("fields.length:", fields.length, "totalColumns:", totalColumns);
     console.log("Merges:", merges);
 
-    // Generate file
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), "BIAData.xlsx");
   };
@@ -480,25 +475,22 @@ export default function Page() {
   const handleSubmit = async (row) => {
     const fields = getFields();
 
-    // --- Custom validation ---
     const isEmpty = fields.some(f => {
       const value = row[f.name]?.value;
 
       if (f.name === "Impact To Company") {
-        return false; // always auto-filled
+        return false; 
       }
 
       if (f.name === "Time From Start Of Incident") {
-        return false; // always auto-filled
+        return false; 
       }
 
       if (f.name === "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)") {
-        // must have all 4 justifications filled
         if (!Array.isArray(value)) return true;
         return value.some(v => !String(v || "").trim());
       }
 
-      // default check for other fields
       return !String(value || "").trim();
     });
 
@@ -506,34 +498,25 @@ export default function Page() {
 
     const token = localStorage.getItem("auth-token");
 
-    // --- Flatten form data ---
     const formData = {};
     fields.forEach(f => {
       const fieldData = row[f.name] || {};
       let value = fieldData.value;
-
-      // Impact To Company
       if (f.name === "Impact To Company") {
         value = Array.isArray(value) ? value : ["Minor", "Minor", "Minor", "Minor"];
         formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
         return;
       }
-
-      // Justification
       if (f.name === "Justification for Impact to Company (Based on Financial / Operational / Legal Reasons)") {
         value = Array.isArray(value) ? value : ["", "", "", ""];
         formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
         return;
       }
-
-      // Time From Start Of Incident
       if (f.name === "Time From Start Of Incident") {
         value = ["First 24 Hours", "24 - 48 Hours", "Up to 1 Week", "Up to 2 Weeks"];
         formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
         return;
       }
-
-      // Default
       if (f.type === "impactDropdowns" && Array.isArray(value)) {
         formData[sanitize(f.name)] = { value, comments: fieldData.comments || [] };
       } else {
@@ -544,7 +527,6 @@ export default function Page() {
       }
     });
 
-    // --- Status logic ---
     let statusForSubmit;
     const isSuperAdmin = requiredData.role === "super admin";
 
@@ -569,7 +551,6 @@ export default function Page() {
       setLoading(true);
 
       if (row.dataId) {
-        // --- UPDATE ---
         setEditButton("Saving...");
         const res = await fetch(
           `${MyContextApi.backendURL}/api/update-business-impact-analysis-data/${row.dataId}`,
@@ -605,7 +586,6 @@ export default function Page() {
           alert("Update failed.");
         }
       } else {
-        // --- CREATE ---
         setSendButton("Sending...");
         const res = await fetch(
           `${MyContextApi.backendURL}/api/add-business-impact-analysis-data`,
@@ -755,14 +735,14 @@ export default function Page() {
 
   const handleAdminDecision = async (row, decision) => {
     const token = localStorage.getItem("auth-token");
-     const updatedStatus =
-    requiredData.role === "super admin"
-      ? decision === "approve"
-        ? "Final Approved By Super Admin"
-        : "Rejected By Super Admin"
-      : decision === "approve"
-      ? "Final Approved By Admin"
-      : "Rejected By Admin";
+    const updatedStatus =
+      requiredData.role === "super admin"
+        ? decision === "approve"
+          ? "Final Approved By Super Admin"
+          : "Rejected By Super Admin"
+        : decision === "approve"
+          ? "Final Approved By Admin"
+          : "Rejected By Admin";
     const payload = {
       currentStatus: updatedStatus,
       lastEditedBy: requiredData.email
@@ -868,7 +848,7 @@ export default function Page() {
 
 
   const openCommentPopup = (rowId, field, mode) => {
-    setCommentPopup({ open: true, rowId, field, mode }); // mode: "add" or "view"
+    setCommentPopup({ open: true, rowId, field, mode }); 
     setCommentText("");
   };
 
@@ -879,7 +859,7 @@ export default function Page() {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, "0");
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const year = String(now.getFullYear()).slice(-2); // last 2 digits
+    const year = String(now.getFullYear()).slice(-2); 
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const seconds = String(now.getSeconds()).padStart(2, "0");
@@ -901,7 +881,6 @@ export default function Page() {
       date: formatDateTime(),
     };
 
-    // Update local rows state (for instant UI feedback)
     setRows(prev =>
       prev.map(r =>
         String(r.id) === String(commentPopup.rowId)
@@ -918,7 +897,6 @@ export default function Page() {
       )
     );
 
-    // Persist only if there's a real comment and the row is saved (has dataId)
     if (trimmed !== "" && row.dataId) {
       try {
         const token = localStorage.getItem("auth-token");
@@ -938,7 +916,6 @@ export default function Page() {
         );
       } catch (err) {
         console.error("Failed to save comment:", err);
-        // optional: rollback UI if you want
       }
     }
 
@@ -1022,7 +999,6 @@ export default function Page() {
   return (
     <div className={styles.dataPage}>
       <img src="Line.png" alt="" className={styles.topLine} />
-      {/* <img src="Line.png" alt="" className={styles.bottomLine} /> */}
       {notificationScreen && (
         <div className={styles.notificationScreen}>
           <div className={styles.notificationBox}>
@@ -1072,11 +1048,24 @@ export default function Page() {
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              {/* <button className={`btn-a ${styles.filterBtn}`}>Ledger</button> */}
-              <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
+
+              <button className="btn-a" onClick={displayLogoutScreen}>
+                Logout
+              </button>
+
+              {requiredData.role === "super admin" && (
+                <Link
+                  href="/signup"
+                  className={`flex-btn btn-a filled-btn ${styles.flexBtn} ${styles.btnA} ${styles.signupBtn}`}
+                >
+                  <p>Create User</p>
+                  <ArrowForwardIcon className={`flex-btn-icon ${styles.flexBtnIcon}`} />
+                </Link>
+              )}
             </div>
           </div>
         </div>
+
       </div>
       <div className={styles.featureRow}>
         <div className={styles.featureRowLeft}>
@@ -1118,23 +1107,12 @@ export default function Page() {
           </div>
         )}
         <table>
-          {/* <tr>
-              <th colSpan={3}></th>
-              <th colSpan={4} style={{ backgroundColor: 'cornflowerblue' }}>Disruption Impact</th>
-              <th colSpan={2}></th>
-              <th colSpan={5} style={{ backgroundColor: 'rgb(135, 213, 17)' }}>Critical Activites - Resources</th>
-              <th colSpan={2} style={{ backgroundColor: 'orange' }}>Current Status of Backup Plan</th>
-              <th colSpan={3}></th>
-              <th colSpan={3} style={{ backgroundColor: 'orangered' }}>User Action & Data Status</th>
-            </tr> */}
           <thead>
-            {/* First row: grouped headers */}
             <tr>
               {Object.entries(columnGroups).map(([group, fields]) => {
-                // Count how many of this group's fields exist in getFields()
                 const count = fields.filter(f =>
                   f === "S.No" || f === "Actions" || f === "Status" || f === "Last Edit"
-                    ? true // always present
+                    ? true 
                     : getFields().some(field => field.name === f)
                 ).length;
 
@@ -1148,7 +1126,7 @@ export default function Page() {
 
                 const groupLabel =
                   group === "blank1" || group === "blank2" || group === "blank3"
-                    ? "" // render empty header for blank groups
+                    ? "" 
                     : group === "disruptionImpact"
                       ? "Disruption Impact"
                       : group === "criticalActivities"
@@ -1168,8 +1146,6 @@ export default function Page() {
                     onMouseLeave={() => setHoveredHeader(null)}
                   >
                     {groupLabel}
-
-                    {/* Tooltip for group header comments */}
                     {hoveredHeader === group &&
                       headerComments[group]?.length > 0 && (
                         <div
@@ -1198,7 +1174,6 @@ export default function Page() {
                         </div>
                       )}
 
-                    {/* Add Comment Icon */}
                     {groupLabel && (
                       <AddCommentIcon
                         style={{
@@ -1210,7 +1185,7 @@ export default function Page() {
                         }}
                         onClick={() => {
                           const text = prompt(`Add comment for ${groupLabel}`);
-                          if (text) addHeaderComment(group, text); // ✅ use group name as fieldName
+                          if (text) addHeaderComment(group, text);
                         }}
                         titleAccess="Add Header Comment"
                       />
@@ -1220,7 +1195,6 @@ export default function Page() {
               })}
             </tr>
 
-            {/* Second row: actual field headers with comments */}
             <tr>
               <th>S.No</th>
               {getFields().map(field => (
@@ -1231,8 +1205,6 @@ export default function Page() {
                   onMouseLeave={() => setHoveredHeader(null)}
                 >
                   {field.label}
-
-                  {/* Tooltip for header comments */}
                   {hoveredHeader === field.name &&
                     headerComments[field.name]?.length > 0 && (
                       <div
@@ -1261,7 +1233,6 @@ export default function Page() {
                       </div>
                     )}
 
-                  {/* Add Comment Icon */}
                   <AddCommentIcon
                     style={{
                       position: "absolute",
@@ -1295,7 +1266,6 @@ export default function Page() {
                       onMouseEnter={() => setHoveredField({ rowId: row.id, fieldName: field.name })}
                       onMouseLeave={() => setHoveredField(null)}>
 
-                      {/* Special case for Impact To Company */}
                       {field.name === "Impact To Company" ? (
                         <div style={{ display: "flex", gap: "10px", flexDirection: 'column' }}>
                           {(Array.isArray(row[field.name]?.value) ? row[field.name].value : ["Minor", "Minor", "Minor", "Minor"]).map((val, idx) => (
@@ -1330,7 +1300,6 @@ export default function Page() {
 
                       ) : (field.name === "Max. Tolerable Period of Disruption (MTPD)" ||
                         field.name === "Recovery Time Objective (RTO)") ? (
-                        // Existing logic for these two fields
                         <select
                           className="input-field"
                           value={row[field.name]?.value || ""}
@@ -1355,7 +1324,6 @@ export default function Page() {
 
                       ) : field.name === "Key Function / Service" ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {/* First field */}
                           <input
                             type="text"
                             value={Array.isArray(row[field.name]?.value) ? row[field.name].value[0] : ""}
@@ -1364,8 +1332,6 @@ export default function Page() {
                             style={{ width: '100%' }}
                             className='input-field'
                           />
-
-                          {/* Second field (fixed value, disabled) */}
                           <input
                             type="text"
                             value="Function Description & Critical Acitivities"
@@ -1374,8 +1340,6 @@ export default function Page() {
                             style={{ backgroundColor: "#f5f5f5", cursor: "not-allowed", width: '100%' }}
                             className='input-field'
                           />
-
-                          {/* Third field (textarea) */}
                           <textarea
                             value={Array.isArray(row[field.name]?.value) ? row[field.name].value[2] : ""}
                             onChange={(e) => handleKeyFunctionChange(row.id, 2, e.target.value)}
@@ -1417,9 +1381,6 @@ export default function Page() {
                               disabled={requiredData.role === 'admin' || (row.submitted && !row.editable)}
                             />
                           )}
-
-
-                      {/* Comment Tooltip */}
                       {hoveredField?.rowId === row.id &&
                         hoveredField?.fieldName === field.name &&
                         row[field.name]?.comments?.length > 0 && (
@@ -1546,16 +1507,9 @@ export default function Page() {
                       <button className={`btn-a ${styles.failBtn}`} onClick={() => displaySuccessScreen(row.id)}>Delete</button>
                     </>
                   )}
-                  {/* If created by Super Admin → only Edit + Delete */}
                   {requiredData.role === "super admin" &&
                     row.currentStatus === "Data Created By Super Admin" && (
                       <>
-                        {/* <button
-                          className={`btn-a ${styles.editBtn}`}
-                          onClick={() => enableEdit(row.id)}
-                        >
-                          {editButton[row.id] || "Edit"}
-                        </button> */}
                         <button
                           className={`btn-a ${styles.failBtn}`}
                           onClick={() => displaySuccessScreen(row.id)}

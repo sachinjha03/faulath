@@ -165,7 +165,6 @@
   }
 
   .disabledAnalysisCard {
-    /* width: 530px; */
     width: 100%;
   }
 
@@ -184,18 +183,11 @@
 }
 
 @media screen and (max-width:600px) {
-  /* .primaryAnalysisCard {
-    width: 180px;
-    min-height: 220px;
-    font-size: 10px;
-  } */
-
   .primaryAnalysisCard h3 {
     font-size: 1.7rem;
   }
 
   .disabledAnalysisCard {
-    /* width: 375px; */
     font-size: 12px;
     min-height:200px;
   }
@@ -226,7 +218,6 @@
 @media screen and (max-width:390px) {
    .primaryAnalysisCard {
     width: 100%;
-    /* min-height: 220px; */
     font-size: 9px;
     min-height: 100px;
     height: 200px;

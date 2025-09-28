@@ -340,6 +340,11 @@
 .successIcon {
   color: rgb(6, 161, 6);
 }
+.signupBtn{
+  background-color: white;
+  border: 1px solid var(--black);
+  font-size: 12px;
+}
 
 .successBtn {
   background-color: rgb(6, 161, 6) !important;

@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { saveAs } from "file-saver";
 import DownloadForOfflineIcon from "@mui/icons-material/DownloadForOffline";
 import { MyContext } from "../context/ContextApi";
-import styles from "./DownloadRAData.module.css"; // ✅ same CSS file
+import styles from "./DownloadRAData.module.css"; 
 
 const DownloadBIAData = () => {
   const MyContextApi = useContext(MyContext);
@@ -10,7 +10,7 @@ const DownloadBIAData = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(false);
 
-  const years = [2025, 2024, 2023, 2022]; // can extend dynamically
+  const years = [2025, 2024, 2023, 2022]; 
 
   const handleDownload = async () => {
     setLoading(true);

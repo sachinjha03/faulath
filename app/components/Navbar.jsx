@@ -19,13 +19,8 @@ export default function Navbar() {
           <MenuIcon className={styles.menuIcon} onClick={showMenu} />
         )}
         {displayMenu && <a href="#">Home</a>}
-        {/* {displayMenu && <a href="#">About</a>} */}
       </div>
       <div className={styles.navbarRight}>
-        <Link href="/signup" className={`flex-btn btn-a filled-btn ${styles.flexBtn} ${styles.btnA} ${styles.filledBtn}`}>
-          <p>Sign Up</p>
-          <ArrowForwardIcon className={`flex-btn-icon ${styles.flexBtnIcon}`} />
-        </Link>
         <Link href="/get-help" className={`btn-a outline-btn ${styles.btnA} ${styles.outlineBtn} `}>
           Get Help
         </Link>

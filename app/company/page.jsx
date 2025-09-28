@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { MyContext } from '../context/ContextApi';
 import { jwtDecode } from 'jwt-decode';
 import styles from "./page.module.css"
-// import foulathLogo from "./foulath-logo.png"
+
 
 
 
@@ -155,7 +155,7 @@ function CompanyContent() {
                   company === 'Bahrain Steel' ? '/bahrain-steel-logo.png' :
                     company === 'Sulb' ? '/sulb-logo-1.webp' :
                       company === 'Sulb Saudi' ? '/saudi-sulb-logo-2.png' :
-                        '/default-logo.png'  // fallback image
+                        '/default-logo.png' 
               }
               alt={company}
             />

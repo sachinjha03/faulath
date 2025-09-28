@@ -66,7 +66,6 @@
 .companyCard h4 {
   font-weight: 400;
   position: relative;
-  /* z-index: 20; */
 }
 
 .companyCard p {
@@ -180,7 +179,6 @@
 
 @media screen and (max-width:600px) {
   .companyLandingSectionMiddle{
-    /* max-width: 410px; */
     grid-template-columns: repeat(1,1fr);
     gap: 1rem;
   }

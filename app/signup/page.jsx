@@ -1,13 +1,12 @@
 'use client';
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircle';
 import { MyContext } from '../context/ContextApi';
 import Link from 'next/link';
+import { jwtDecode } from 'jwt-decode';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-
-
 
 const moduleOptions = {
   "Bahrain Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
@@ -21,8 +20,31 @@ export default function Page() {
   const [successScreen, setSuccessScreen] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '', role: '', department: '', company: '', module: '' });
   const [buttonText, setButtonText] = useState('Create Account');
-  const [loading , setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const MyContextApi = useContext(MyContext);
+
+  // ✅ Protect route: only super admin can access 
+
+useEffect(() => {
+  const token = localStorage.getItem("auth-token");
+  if (token) {
+    try {
+      const decoded_token = jwtDecode(token);
+      console.log(decoded_token);
+      
+
+      if (decoded_token.role !== "super admin") {
+        // 🚫 If not super admin, redirect
+        router.push("/");
+      }
+    } catch (err) {
+      console.error("Invalid token:", err);
+      router.push("/"); // if token is invalid, redirect
+    }
+  } else {
+    router.push("/"); // 🚫 If no token, redirect
+  }
+}, [router]);
 
   const handleKeyDown = (e) => {
     if (e.target.name === 'name' && /\d/.test(e.key)) {
@@ -30,7 +52,6 @@ export default function Page() {
     }
   };
 
-  // Handle input change and sanitize values
   const handleChange = (e) => {
     const { name, value } = e.target;
     let sanitizedValue = value.trimStart();
@@ -45,7 +66,6 @@ export default function Page() {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -73,11 +93,14 @@ export default function Page() {
     }
 
     setButtonText("Creating...");
-    setLoading(true)
+    setLoading(true);
+
+    const token = localStorage.getItem("auth-token"); // ✅ send auth token
     const response = await fetch(`${MyContextApi.backendURL}/api/create-user`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(trimmedFormData)
     });
@@ -90,7 +113,7 @@ export default function Page() {
       alert("Failed to create account");
     }
     setButtonText("Create Account");
-    setLoading(false)
+    setLoading(false);
   };
 
   const goToHomePage = () => {
@@ -108,11 +131,11 @@ export default function Page() {
       <img src="/Line.png" alt="" className='line-image' id='analysisLine1' />
       <img src="/Line.png" alt="" className='line-image' id='analysisLine2' />
       <form onSubmit={handleSubmit} className={styles.signupForm} style={{zIndex:10}}>
-        <h3>Create Your Account</h3>
+        <h3>Create User (Super Admin Only)</h3>
 
         <div className={styles.formRow}>
           <div className="input-box">
-            <label htmlFor="name">Enter Your Name</label>
+            <label htmlFor="name">Enter Name</label>
             <input
               type="text"
               name="name"
@@ -125,7 +148,7 @@ export default function Page() {
             />
           </div>
           <div className="input-box">
-            <label htmlFor="email">Enter Your Email</label>
+            <label htmlFor="email">Enter Email</label>
             <input
               type="email"
               name="email"
@@ -167,7 +190,7 @@ export default function Page() {
 
         <div className={styles.formRow}>
           <div className="input-box">
-            <label htmlFor="role">Select Your Role</label>
+            <label htmlFor="role">Select Role</label>
             <select name="role" id="role" className="input-field" value={formData.role} onChange={handleChange} required>
               <option value="">-- Select --</option>
               <option value="champion">Champion</option>
@@ -187,7 +210,7 @@ export default function Page() {
         </div>
 
         <div className="input-box">
-          <label htmlFor="company">Select Your Assigned Company</label>
+          <label htmlFor="company">Select Company</label>
           <select name="company" id="company" className="input-field" value={formData.company} onChange={handleChange} required>
             <option value="">-- Select --</option>
             <option value="Foulath">Foulath</option>
@@ -199,13 +222,11 @@ export default function Page() {
 
         {showModuleSelect && (
           <div className="input-box">
-            <label htmlFor="module">Select Module You Will Work Upon</label>
+            <label htmlFor="module">Select Module</label>
             <select name="module" id="module" className="input-field" value={formData.module} onChange={handleChange} required>
               <option value="">-- Select --</option>
               {moduleOptions[formData.company].map((mod) => (
-                <option key={mod} value={mod}>
-                  {mod}
-                </option>
+                <option key={mod} value={mod}>{mod}</option>
               ))}
             </select>
           </div>
@@ -220,8 +241,8 @@ export default function Page() {
         <div className="success-screen">
           <div className="success-box">
             <CheckCircleOutlineIcon className={styles.successIcon} style={{ fontSize: 50 }} />
-            <h3>Account Created Successfully</h3>
-            <p>You will be redirected to homepage and then you can login yourself</p>
+            <h3>User Created Successfully</h3>
+            <p>You will be redirected to homepage</p>
             <button className="btn-a purple-btn" onClick={goToHomePage}>Take Me To HomePage</button>
           </div>
         </div>

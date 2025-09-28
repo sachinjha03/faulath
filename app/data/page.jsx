@@ -21,6 +21,9 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import DownloadRAData from '../components/DownloadRAData';
+import Link from 'next/link';
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+
 
 
 
@@ -64,19 +67,11 @@ export default function Page() {
 
   // Dummy mapping of companies to risk owners
   const companyRiskOwners = {
-    "Foulath": ["Digital Transformation", "Facility Management", "Finance" , "PR Government Relations" , "HR" , "Internal Audit" , "Legal" , "SAP" , "Capex & Opex" , "Consumables" , "ILIC" , "IS" , "IT"],
-    "Bahrain Steel": ["OA File", "Raw Material" , "Sales & Marketing" , "Shipping"],
-    "Sulb Saudi": ["Sales & Marketing", "Electrical Maintenance", "Logistics", "HR and Administration" , "Mechanical Maintenance" , "Production Planning & Control" , "Quality" , "Rolling Mill & Roll Shop" , "Safety"],
-    "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production" , "Production Planning" , "Quality Assurance" , "Quality Control" , "Safety & Environment" , "Sales & Marketing"],
+    "Foulath": ["Digital Transformation", "Facility Management", "Finance", "PR Government Relations", "HR", "Internal Audit", "Legal", "SAP", "Capex & Opex", "Consumables", "ILIC", "IS", "IT"],
+    "Bahrain Steel": ["OA File", "Raw Material", "Sales & Marketing", "Shipping"],
+    "Sulb Saudi": ["Sales & Marketing", "Electrical Maintenance", "Logistics", "HR and Administration", "Mechanical Maintenance", "Production Planning & Control", "Quality", "Rolling Mill & Roll Shop", "Safety"],
+    "Sulb": ["DR Production", "HSM Production", "Logistics", "MSP Production", "Production Planning", "Quality Assurance", "Quality Control", "Safety & Environment", "Sales & Marketing"],
   };
-
-
-
-
-
-
-
-
 
 
   const colorMap = {
@@ -89,10 +84,6 @@ export default function Page() {
 
 
   const MyContextApi = useContext(MyContext)
-
-
-
-
 
 
   // RETRIEVE IMPORTANT INFO FROM AUTHENTICATION TOKEN
@@ -114,8 +105,6 @@ export default function Page() {
 
 
   // FETCH NOTIFICATIONS
-  // const decoded = jwtDecode(token);
-  // const userRole = decoded?.role;
   const fetchNotifications = async () => {
     const token = localStorage.getItem("auth-token");
 
@@ -130,7 +119,6 @@ export default function Page() {
       });
 
       const json = await res.json();
-      // console.log(json);
 
       if (json.success && Array.isArray(json.data)) {
         setNotifications(json.data);
@@ -142,23 +130,6 @@ export default function Page() {
     }
   };
 
-  // console.log(notifications)
-
-
-  // const markAsRead = async (id) => {
-  //   const token = localStorage.getItem("auth-token");
-  //   try {
-  //     await fetch(`${MyContextApi.backendURL}/api/notifications/${id}/read`, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`
-  //       }
-  //     });
-  //     fetchNotifications(); 
-  //   } catch (err) {
-  //     console.error("Error marking as read", err);
-  //   }
-  // };
 
   const deleteNotification = async (id) => {
     const token = localStorage.getItem("auth-token");
@@ -174,8 +145,6 @@ export default function Page() {
       console.error("Error clearing notifications", err);
     }
   };
-
-
 
 
   // FETCH EXISTING RISK ASSESSMENT DATA FROM THE SERVER
@@ -194,8 +163,6 @@ export default function Page() {
         const formattedData = json.data.map((item) => ({
           id: Date.now() + Math.random(),
           dataId: item._id,
-
-          // unwrap values
           risks: item.risks?.value || "",
           definition: item.definition?.value || "",
           category: item.category?.value || "operational",
@@ -209,13 +176,10 @@ export default function Page() {
           treatmentOption: item.treatmentOption?.value || "Treat",
           mitigationPlan: item.mitigationPlan?.value || "",
           riskOwner: item.riskOwner?.value || "",
-
           currentStatus: item.currentStatus || "Draft",
           submitted: true,
           editable: false,
           lastEditedBy: item.lastEditedBy || "Not Edited Yet",
-
-          // keep raw comments for this row
           _comments: {
             risks: item.risks?.comments || [],
             definition: item.definition?.comments || [],
@@ -292,150 +256,150 @@ export default function Page() {
     comments.map(c => `${c.date}: ${c.text}`).join(" | ");
 
 
-const exportToExcel = async () => {
-  if (!rawData || rawData.length === 0) return;
+  const exportToExcel = async () => {
+    if (!rawData || rawData.length === 0) return;
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Risk Data");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Risk Data");
 
-  // Define column widths
-  worksheet.columns = [
-    { key: "sno", width: 10 }, // S.No (medium width)
-    { key: "risks", width: 30 }, // Risks (wider)
-    { key: "risksComments", width: 40 }, // Risks Comment (wider)
-    { key: "definition", width: 30 }, // Definition/Potential Cause (wider)
-    { key: "definitionComments", width: 40 }, // Definition Comment (wider)
-    { key: "category", width: 15 }, // Category (medium)
-    { key: "likelihood", width: 15 }, // Likelihood (medium)
-    { key: "impact", width: 15 }, // Impact (medium)
-    { key: "riskScore", width: 20 }, // Risk Score (medium)
-    { key: "existingControl", width: 30 }, // Existing Control (wider)
-    { key: "existingControlComments", width: 40 }, // Existing Control Comment (wider)
-    { key: "controlEffectiveness", width: 20 }, // Control Effectiveness (medium)
-    { key: "control", width: 20 }, // Control % (medium)
-    { key: "residualRisk", width: 20 }, // Residual Risk (medium)
-    { key: "treatmentOption", width: 20 }, // Treatment Option (medium)
-    { key: "mitigationPlan", width: 30 }, // Mitigation Plan (wider)
-    { key: "mitigationPlanComments", width: 40 }, // Mitigation Plan Comment (wider)
-    { key: "riskOwner", width: 30 }, // Risk Owner (wider)
-    { key: "riskOwnerComments", width: 40 }, // Risk Owner Comment (wider)
-    { key: "status", width: 20 }, // Status (medium)
-    { key: "lastEdit", width: 20 }, // Last Edit (medium)
-  ];
+    // Define column widths
+    worksheet.columns = [
+      { key: "sno", width: 10 }, // S.No (medium width)
+      { key: "risks", width: 30 }, // Risks (wider)
+      { key: "risksComments", width: 40 }, // Risks Comment (wider)
+      { key: "definition", width: 30 }, // Definition/Potential Cause (wider)
+      { key: "definitionComments", width: 40 }, // Definition Comment (wider)
+      { key: "category", width: 15 }, // Category (medium)
+      { key: "likelihood", width: 15 }, // Likelihood (medium)
+      { key: "impact", width: 15 }, // Impact (medium)
+      { key: "riskScore", width: 20 }, // Risk Score (medium)
+      { key: "existingControl", width: 30 }, // Existing Control (wider)
+      { key: "existingControlComments", width: 40 }, // Existing Control Comment (wider)
+      { key: "controlEffectiveness", width: 20 }, // Control Effectiveness (medium)
+      { key: "control", width: 20 }, // Control % (medium)
+      { key: "residualRisk", width: 20 }, // Residual Risk (medium)
+      { key: "treatmentOption", width: 20 }, // Treatment Option (medium)
+      { key: "mitigationPlan", width: 30 }, // Mitigation Plan (wider)
+      { key: "mitigationPlanComments", width: 40 }, // Mitigation Plan Comment (wider)
+      { key: "riskOwner", width: 30 }, // Risk Owner (wider)
+      { key: "riskOwnerComments", width: 40 }, // Risk Owner Comment (wider)
+      { key: "status", width: 20 }, // Status (medium)
+      { key: "lastEdit", width: 20 }, // Last Edit (medium)
+    ];
 
-  // --- Row 1: Add grouped header row (merged) ---
-  const groupRow = worksheet.addRow([
-    "Risk Identification", "", "", "", "", "",
-    "Risk Analysis", "", "", "", "", "", "",
-    "Risk Evaluation",
-    "Risk Treatment", "", "",
-    "Risk Owner", "",
-    "Data Status", ""
-  ]);
-
-  // Adjusted merges based on specified column spans
-  worksheet.mergeCells(`A${groupRow.number}:F${groupRow.number}`); // Risk Identification (A-F: S.No, Risks, Risks Comment, Definition, Definition Comment, Category)
-  worksheet.mergeCells(`G${groupRow.number}:M${groupRow.number}`); // Risk Analysis (G-M: Likelihood, Impact, Risk Score, Existing Control, Existing Control Comment, Control Effectiveness, Control %)
-  worksheet.mergeCells(`N${groupRow.number}:N${groupRow.number}`); // Risk Evaluation (N: Residual Risk)
-  worksheet.mergeCells(`O${groupRow.number}:Q${groupRow.number}`); // Risk Treatment (O-Q: Treatment Option, Mitigation Plan, Mitigation Plan Comment)
-  worksheet.mergeCells(`R${groupRow.number}:S${groupRow.number}`); // Risk Owner (R-S: Risk Owner, Risk Owner Comment)
-  worksheet.mergeCells(`T${groupRow.number}:U${groupRow.number}`); // Data Status (T-U: Status, Last Edit)
-
-  // Apply background colors to the first cell of each merged section
-  groupRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "37D92B" } }; // Risk Identification
-  groupRow.getCell(7).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } }; // Risk Analysis
-  groupRow.getCell(14).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "3C9DEC" } }; // Risk Evaluation
-  groupRow.getCell(15).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "E819B1" } }; // Risk Treatment
-  groupRow.getCell(18).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "56C4F4" } }; // Risk Owner
-  groupRow.getCell(20).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF8C00" } }; // Data Status
-
-  groupRow.eachCell(cell => {
-    cell.font = { bold: true };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  });
-
-  // --- Row 2: Normal headers ---
-  const headerRow = worksheet.addRow([
-    "S.No",
-    "Risks",
-    "Risks Comment",
-    "Definition/Potential Cause",
-    "Definition Comment",
-    "Category",
-    "Likelihood",
-    "Impact",
-    "Risk Score",
-    "Existing Control",
-    "Existing Control Comment",
-    "Control Effectiveness",
-    "Control %",
-    "Residual Risk",
-    "Treatment Option",
-    "Mitigation Plan",
-    "Mitigation Plan Comment",
-    "Risk Owner",
-    "Risk Owner Comment",
-    "Status",
-    "Last Edit"
-  ]);
-
-  headerRow.eachCell(cell => {
-    cell.font = { bold: true };
-    cell.alignment = { horizontal: "center", vertical: "middle" };
-  });
-
-  // Helper function to format comments
-  const formatComments = (arr) =>
-    (arr || [])
-      .map(
-        (c) =>
-          `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
-            c.date
-          ).toLocaleTimeString()}] ${c.text}`
-      )
-      .join("\n");
-
-  // --- Add data rows as arrays to match header order ---
-  rawData.forEach((elem, index) => {
-    worksheet.addRow([
-      index + 1,
-      elem.risks?.value || "",
-      formatComments(elem.risks?.comments),
-      elem.definition?.value || "",
-      formatComments(elem.definition?.comments),
-      elem.category?.value || "",
-      elem.likelihood?.value || "",
-      elem.impact?.value || "",
-      elem.riskScore?.value || "",
-      elem.existingControl?.value || "",
-      formatComments(elem.existingControl?.comments),
-      elem.controlEffectiveness?.value || "",
-      elem.control?.value || "",
-      elem.residualRisk?.value || "",
-      elem.treatmentOption?.value || "",
-      elem.mitigationPlan?.value || "",
-      formatComments(elem.mitigationPlan?.comments),
-      elem.riskOwner?.value || "",
-      formatComments(elem.riskOwner?.comments),
-      elem.currentStatus || "",
-      elem.lastEditedBy
-        ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
-        : "Not Edited Yet"
+    // --- Row 1: Add grouped header row (merged) ---
+    const groupRow = worksheet.addRow([
+      "Risk Identification", "", "", "", "", "",
+      "Risk Analysis", "", "", "", "", "", "",
+      "Risk Evaluation",
+      "Risk Treatment", "", "",
+      "Risk Owner", "",
+      "Data Status", ""
     ]);
-  });
 
-  // Apply wrapping and top alignment only to data rows (starting from row 3)
-  const dataRows = worksheet.getRows(3, rawData.length || 0);
-  dataRows.forEach((row) => {
-    row.eachCell((cell) => {
-      cell.alignment = { wrapText: true, vertical: "top" };
+    // Adjusted merges based on specified column spans
+    worksheet.mergeCells(`A${groupRow.number}:F${groupRow.number}`); // Risk Identification (A-F: S.No, Risks, Risks Comment, Definition, Definition Comment, Category)
+    worksheet.mergeCells(`G${groupRow.number}:M${groupRow.number}`); // Risk Analysis (G-M: Likelihood, Impact, Risk Score, Existing Control, Existing Control Comment, Control Effectiveness, Control %)
+    worksheet.mergeCells(`N${groupRow.number}:N${groupRow.number}`); // Risk Evaluation (N: Residual Risk)
+    worksheet.mergeCells(`O${groupRow.number}:Q${groupRow.number}`); // Risk Treatment (O-Q: Treatment Option, Mitigation Plan, Mitigation Plan Comment)
+    worksheet.mergeCells(`R${groupRow.number}:S${groupRow.number}`); // Risk Owner (R-S: Risk Owner, Risk Owner Comment)
+    worksheet.mergeCells(`T${groupRow.number}:U${groupRow.number}`); // Data Status (T-U: Status, Last Edit)
+
+    // Apply background colors to the first cell of each merged section
+    groupRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "37D92B" } }; // Risk Identification
+    groupRow.getCell(7).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFF00" } }; // Risk Analysis
+    groupRow.getCell(14).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "3C9DEC" } }; // Risk Evaluation
+    groupRow.getCell(15).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "E819B1" } }; // Risk Treatment
+    groupRow.getCell(18).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "56C4F4" } }; // Risk Owner
+    groupRow.getCell(20).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF8C00" } }; // Data Status
+
+    groupRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
     });
-  });
 
-  // Export file
-  const buffer = await workbook.xlsx.writeBuffer();
-  saveAs(new Blob([buffer]), "RiskData.xlsx");
-};
+    // --- Row 2: Normal headers ---
+    const headerRow = worksheet.addRow([
+      "S.No",
+      "Risks",
+      "Risks Comment",
+      "Definition/Potential Cause",
+      "Definition Comment",
+      "Category",
+      "Likelihood",
+      "Impact",
+      "Risk Score",
+      "Existing Control",
+      "Existing Control Comment",
+      "Control Effectiveness",
+      "Control %",
+      "Residual Risk",
+      "Treatment Option",
+      "Mitigation Plan",
+      "Mitigation Plan Comment",
+      "Risk Owner",
+      "Risk Owner Comment",
+      "Status",
+      "Last Edit"
+    ]);
+
+    headerRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    // Helper function to format comments
+    const formatComments = (arr) =>
+      (arr || [])
+        .map(
+          (c) =>
+            `[${new Date(c.date).toLocaleDateString("en-GB")} ${new Date(
+              c.date
+            ).toLocaleTimeString()}] ${c.text}`
+        )
+        .join("\n");
+
+    // --- Add data rows as arrays to match header order ---
+    rawData.forEach((elem, index) => {
+      worksheet.addRow([
+        index + 1,
+        elem.risks?.value || "",
+        formatComments(elem.risks?.comments),
+        elem.definition?.value || "",
+        formatComments(elem.definition?.comments),
+        elem.category?.value || "",
+        elem.likelihood?.value || "",
+        elem.impact?.value || "",
+        elem.riskScore?.value || "",
+        elem.existingControl?.value || "",
+        formatComments(elem.existingControl?.comments),
+        elem.controlEffectiveness?.value || "",
+        elem.control?.value || "",
+        elem.residualRisk?.value || "",
+        elem.treatmentOption?.value || "",
+        elem.mitigationPlan?.value || "",
+        formatComments(elem.mitigationPlan?.comments),
+        elem.riskOwner?.value || "",
+        formatComments(elem.riskOwner?.comments),
+        elem.currentStatus || "",
+        elem.lastEditedBy
+          ? `${elem.lastEditedBy.email}, ${elem.lastEditedBy.date}, ${elem.lastEditedBy.time}`
+          : "Not Edited Yet"
+      ]);
+    });
+
+    // Apply wrapping and top alignment only to data rows (starting from row 3)
+    const dataRows = worksheet.getRows(3, rawData.length || 0);
+    dataRows.forEach((row) => {
+      row.eachCell((cell) => {
+        cell.alignment = { wrapText: true, vertical: "top" };
+      });
+    });
+
+    // Export file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "RiskData.xlsx");
+  };
 
 
 
@@ -582,40 +546,40 @@ const exportToExcel = async () => {
       return;
     }
     const payload = {
-  risks: row.risks,
-  definition: row.definition,
-  category: row.category,
-  likelihood: Number(row.likelihood),
-  impact: Number(row.impact),
-  riskScore: row.riskScore,
-  existingControl: row.existingControl,
-  controlEffectiveness: row.controlEffectiveness,
-  control: Number(row.control),
-  residualRisk: row.residualRisk,
-  treatmentOption: row.treatmentOption,
-  mitigationPlan: row.mitigationPlan,
-  riskOwner: row.riskOwner,
-  approvedBy: "",
-  finalApprovedBy: "",
-  company: requiredData.company,
-  ...(row.dataId
-    ? {
-        // For updates
-        lastEditedBy: { email: requiredData.email },
-        userId: requiredData.userId,
-        createdBy: row.createdBy,
-        currentStatus: row.currentStatus, // 👈 preserve existing status
-      }
-    : {
-        // For new entries
-        createdBy: requiredData.email,
-        userId: requiredData.userId,
-        lastEditedBy: null,
-        currentStatus: requiredData.role === "super admin"
-          ? "Data Created By Super Admin"
-          : "Pending for Owner Approval",
-      })
-};
+      risks: row.risks,
+      definition: row.definition,
+      category: row.category,
+      likelihood: Number(row.likelihood),
+      impact: Number(row.impact),
+      riskScore: row.riskScore,
+      existingControl: row.existingControl,
+      controlEffectiveness: row.controlEffectiveness,
+      control: Number(row.control),
+      residualRisk: row.residualRisk,
+      treatmentOption: row.treatmentOption,
+      mitigationPlan: row.mitigationPlan,
+      riskOwner: row.riskOwner,
+      approvedBy: "",
+      finalApprovedBy: "",
+      company: requiredData.company,
+      ...(row.dataId
+        ? {
+          // For updates
+          lastEditedBy: { email: requiredData.email },
+          userId: requiredData.userId,
+          createdBy: row.createdBy,
+          currentStatus: row.currentStatus, // 👈 preserve existing status
+        }
+        : {
+          // For new entries
+          createdBy: requiredData.email,
+          userId: requiredData.userId,
+          lastEditedBy: null,
+          currentStatus: requiredData.role === "super admin"
+            ? "Data Created By Super Admin"
+            : "Pending for Owner Approval",
+        })
+    };
 
 
 
@@ -755,54 +719,54 @@ const exportToExcel = async () => {
   };
 
   const handleAdminDecision = async (row, decision) => {
-  const token = localStorage.getItem("auth-token");
+    const token = localStorage.getItem("auth-token");
 
-  // Determine updatedStatus based on role
-  const updatedStatus =
-    requiredData.role === "super admin"
-      ? decision === "approve"
-        ? "Final Approved By Super Admin"
-        : "Rejected By Super Admin"
-      : decision === "approve"
-      ? "Final Approved By Admin"
-      : "Rejected By Admin";
+    // Determine updatedStatus based on role
+    const updatedStatus =
+      requiredData.role === "super admin"
+        ? decision === "approve"
+          ? "Final Approved By Super Admin"
+          : "Rejected By Super Admin"
+        : decision === "approve"
+          ? "Final Approved By Admin"
+          : "Rejected By Admin";
 
-  const payload = {
-    currentStatus: updatedStatus,
-    lastEditedBy: requiredData.email,
-  };
+    const payload = {
+      currentStatus: updatedStatus,
+      lastEditedBy: requiredData.email,
+    };
 
-  // Only set finalApprovedBy if approved
-  if (decision === "approve") {
-    payload.finalApprovedBy = requiredData.email;
-  }
-
-  try {
-    const response = await fetch(
-      `${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-    const json = await response.json();
-    if (json.success) {
-      setRows((prev) =>
-        prev.map((r) =>
-          r.id === row.id ? { ...r, currentStatus: updatedStatus } : r
-        )
-      );
-    } else {
-      alert("Failed to update final approval status.");
+    // Only set finalApprovedBy if approved
+    if (decision === "approve") {
+      payload.finalApprovedBy = requiredData.email;
     }
-  } catch (err) {
-    alert("Error occurred during final approval.");
-  }
-};
+
+    try {
+      const response = await fetch(
+        `${MyContextApi.backendURL}/api/update-risk-assessment-data/${row.dataId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const json = await response.json();
+      if (json.success) {
+        setRows((prev) =>
+          prev.map((r) =>
+            r.id === row.id ? { ...r, currentStatus: updatedStatus } : r
+          )
+        );
+      } else {
+        alert("Failed to update final approval status.");
+      }
+    } catch (err) {
+      alert("Error occurred during final approval.");
+    }
+  };
 
 
 
@@ -902,24 +866,11 @@ const exportToExcel = async () => {
     return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
   };
 
-  // function getFormattedDate() {
-  //   const today = new Date();
-  //   const dd = String(today.getDate()).padStart(2, "0");
-  //   const mm = String(today.getMonth() + 1).padStart(2, "0");
-  //   const yy = String(today.getFullYear()).slice(-2);
-
-  //   return `${dd}/${mm}/${yy}`;
-  // }
 
   const saveComment = async () => {
     if (!commentPopup.rowId || !commentPopup.field) return;
 
     const row = rows.find(r => String(r.id) === String(commentPopup.rowId));
-    // if (!row || !row.rowId) {
-    //   console.error("No matching row/dataId for comment");
-    //   return;
-    // }
-
     const newCommentObj = {
       text: commentText.trim(),
       date: formatDateTime()
@@ -1063,12 +1014,24 @@ const exportToExcel = async () => {
             <AccountCircleIcon className={styles.profileIcon} />
             <div className={styles.myProfileDetails}>
               <h4>{requiredData.email}</h4>
-              {/* <button className={`btn-a flex-btn ${styles.filterBtn}`}onClick={handleBackupButtonClick}>Backup Till {getFormattedDate().display}</button> */}
 
-              <button className="btn-a" onClick={displayLogoutScreen}>Logout</button>
+              <button className="btn-a" onClick={displayLogoutScreen}>
+                Logout
+              </button>
+
+              {requiredData.role === "super admin" && (
+                <Link
+                  href="/signup"
+                  className={`flex-btn btn-a filled-btn ${styles.flexBtn} ${styles.btnA} ${styles.signupBtn}`}
+                >
+                  <p>Create User</p>
+                  <ArrowForwardIcon className={`flex-btn-icon ${styles.flexBtnIcon}`} />
+                </Link>
+              )}
             </div>
           </div>
         </div>
+
       </div>
 
 
@@ -1447,7 +1410,7 @@ const exportToExcel = async () => {
 
 
                 {/* Residual Risk */}
-                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk <10 ? "#FFFF00" : "#FF0000", position: "relative"  }}>
+                <td style={{ backgroundColor: row.residualRisk >= 1 && row.residualRisk <= 2 ? "#59bd59ff" : row.residualRisk >= 3 && row.residualRisk < 10 ? "#FFFF00" : "#FF0000", position: "relative" }}>
                   <input
                     type="number"
                     className="input-field"
