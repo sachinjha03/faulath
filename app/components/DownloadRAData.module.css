@@ -17,7 +17,10 @@
   color: #333333;
   margin-bottom: 16px;
   text-align: center;
+  align-self: center;
   width: 300px;
+  margin-top: 20px;
+
 }
 
 .dropdown {
@@ -31,6 +34,10 @@
   color: #444;
   background-color: #f9f9f9;
   cursor: pointer;
+  align-self: center;
+  margin-top: 20px;
+  /* height: 60px; */
+  /* background-color: red; */
 }
 
 .dropdown:focus {

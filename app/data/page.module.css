@@ -149,7 +149,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 2rem;
   z-index: 10;
 }

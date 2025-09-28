@@ -139,8 +139,8 @@ h3 {
   padding: 0.5rem 0.5rem;
   border-radius: 8px;
   outline: none;
+  padding-right: 40px;
 }
-
 input[type="email"] {
   text-transform: lowercase;
 }
@@ -150,6 +150,7 @@ textarea {
   width: 300px;
   border: 1px solid rgb(185, 185, 185) !important;
   resize: none;
+  padding-right: 20px;
 }
 
 textarea::-webkit-scrollbar-track {
